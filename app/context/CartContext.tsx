@@ -389,6 +389,298 @@
 //   return context;
 // }
 
+// "use client";
+
+// import { createContext, useContext, useEffect, useState } from "react";
+
+// type CartItem = {
+//   _id: string;
+//   name: string;
+//   price: number;
+//   image?: string;
+//   qty: number;
+// };
+
+// type CartContextType = {
+//   cartItems: CartItem[];
+//   addToCart: (item: CartItem) => void;
+// };
+
+// const CartContext = createContext<CartContextType | undefined>(
+//   undefined
+// );
+
+// export function CartProvider({
+//   children,
+// }: {
+//   children: React.ReactNode;
+// }) {
+//   // ✅ ONLY place we read localStorage
+//   const [cartItems, setCartItems] = useState<CartItem[]>(() => {
+//     if (typeof window === "undefined") return [];
+//     const storedCart = localStorage.getItem("cart");
+//     return storedCart ? JSON.parse(storedCart) : [];
+//   });
+
+//   // ✅ ONLY syncing state → localStorage
+//   useEffect(() => {
+//     localStorage.setItem("cart", JSON.stringify(cartItems));
+//   }, [cartItems]);
+
+//   const addToCart = (item: CartItem) => {
+//     setCartItems((prev) => {
+//       const existing = prev.find(
+//         (p) => p._id === item._id
+//       );
+
+//       if (existing) {
+//         return prev.map((p) =>
+//           p._id === item._id
+//             ? { ...p, qty: p.qty + 1 }
+//             : p
+//         );
+//       }
+
+//       return [...prev, item];
+//     });
+//   };
+
+//   return (
+//     <CartContext.Provider value={{ cartItems, addToCart }}>
+//       {children}
+//     </CartContext.Provider>
+//   );
+// }
+
+// export function useCart() {
+//   const context = useContext(CartContext);
+//   if (!context) {
+//     throw new Error("useCart must be used within CartProvider");
+//   }
+//   return context;
+// }
+
+
+// "use client";
+
+// import { createContext, useContext, useEffect, useState } from "react";
+
+// type CartItem = {
+//   _id: string;
+//   name: string;
+//   price: number;
+//   image?: string;
+//   qty: number;
+// };
+
+// type CartContextType = {
+//   cartItems: CartItem[];
+//   addToCart: (item: CartItem) => void;
+//   increaseQty: (id: string) => void;
+//   decreaseQty: (id: string) => void;
+//   removeFromCart: (id: string) => void;
+//   clearCart: () => void;
+// };
+
+// const CartContext = createContext<CartContextType | undefined>(undefined);
+
+// export function CartProvider({
+//   children,
+// }: {
+//   children: React.ReactNode;
+// }) {
+//   // ✅ ONLY place we read localStorage
+//   const [cartItems, setCartItems] = useState<CartItem[]>(() => {
+//     if (typeof window === "undefined") return [];
+//     const storedCart = localStorage.getItem("cart");
+//     return storedCart ? JSON.parse(storedCart) : [];
+//   });
+
+//   // ✅ ONLY syncing state → localStorage
+//   useEffect(() => {
+//     localStorage.setItem("cart", JSON.stringify(cartItems));
+//   }, [cartItems]);
+
+//   // ➕ ADD TO CART
+//   const addToCart = (item: CartItem) => {
+//     setCartItems((prev) => {
+//       const existing = prev.find((p) => p._id === item._id);
+
+//       if (existing) {
+//         return prev.map((p) =>
+//           p._id === item._id ? { ...p, qty: p.qty + 1 } : p
+//         );
+//       }
+
+//       return [...prev, { ...item, qty: item.qty || 1 }];
+//     });
+//   };
+
+//   // ➕ INCREASE QTY
+//   const increaseQty = (id: string) => {
+//     setCartItems((prev) =>
+//       prev.map((item) =>
+//         item._id === id ? { ...item, qty: item.qty + 1 } : item
+//       )
+//     );
+//   };
+
+//   // ➖ DECREASE QTY
+//   const decreaseQty = (id: string) => {
+//     setCartItems((prev) =>
+//       prev
+//         .map((item) =>
+//           item._id === id ? { ...item, qty: item.qty - 1 } : item
+//         )
+//         .filter((item) => item.qty > 0)
+//     );
+//   };
+
+//   // ❌ REMOVE ITEM
+//   const removeFromCart = (id: string) => {
+//     setCartItems((prev) => prev.filter((item) => item._id !== id));
+//   };
+
+//   // 🧹 CLEAR CART (Checkout success)
+//   const clearCart = () => {
+//     setCartItems([]);
+//   };
+
+//   return (
+//     <CartContext.Provider
+//       value={{
+//         cartItems,
+//         addToCart,
+//         increaseQty,
+//         decreaseQty,
+//         removeFromCart,
+//         clearCart,
+//       }}
+//     >
+//       {children}
+//     </CartContext.Provider>
+//   );
+// }
+
+// export function useCart() {
+//   const context = useContext(CartContext);
+//   if (!context) {
+//     throw new Error("useCart must be used within CartProvider");
+//   }
+//   return context;
+// }
+
+
+// "use client";
+
+// import { createContext, useContext, useEffect, useRef, useState } from "react";
+
+// type CartItem = {
+//   _id: string;
+//   name: string;
+//   price: number;
+//   image?: string;
+//   qty: number;
+// };
+
+// type CartContextType = {
+//   cartItems: CartItem[];
+//   addToCart: (item: CartItem) => void;
+//   increaseQty: (id: string) => void;
+//   decreaseQty: (id: string) => void;
+//   removeFromCart: (id: string) => void;
+//   clearCart: () => void;
+// };
+
+// const CartContext = createContext<CartContextType | undefined>(undefined);
+
+// export function CartProvider({ children }: { children: React.ReactNode }) {
+//   // Same initial render on server & client
+//   const [cartItems, setCartItems] = useState<CartItem[]>([]);
+//   const hasMounted = useRef(false);
+
+//   // ✅ Load from localStorage AFTER mount (once)
+//   useEffect(() => {
+//     const stored = localStorage.getItem("cart");
+//     if (stored) {
+//       try {
+//         setCartItems(JSON.parse(stored));
+//       } catch {
+//         setCartItems([]);
+//       }
+//     }
+//     hasMounted.current = true;
+//   }, []);
+
+//   // ✅ Sync to localStorage AFTER first mount
+//   useEffect(() => {
+//     if (!hasMounted.current) return;
+//     localStorage.setItem("cart", JSON.stringify(cartItems));
+//   }, [cartItems]);
+
+//   const addToCart = (item: CartItem) => {
+//     setCartItems((prev) => {
+//       const existing = prev.find((p) => p._id === item._id);
+//       if (existing) {
+//         return prev.map((p) =>
+//           p._id === item._id ? { ...p, qty: p.qty + 1 } : p
+//         );
+//       }
+//       return [...prev, { ...item, qty: 1 }];
+//     });
+//   };
+
+//   const increaseQty = (id: string) => {
+//     setCartItems((prev) =>
+//       prev.map((item) =>
+//         item._id === id ? { ...item, qty: item.qty + 1 } : item
+//       )
+//     );
+//   };
+
+//   const decreaseQty = (id: string) => {
+//     setCartItems((prev) =>
+//       prev
+//         .map((item) =>
+//           item._id === id ? { ...item, qty: item.qty - 1 } : item
+//         )
+//         .filter((item) => item.qty > 0)
+//     );
+//   };
+
+//   const removeFromCart = (id: string) => {
+//     setCartItems((prev) => prev.filter((item) => item._id !== id));
+//   };
+
+//   const clearCart = () => {
+//     setCartItems([]);
+//   };
+
+//   return (
+//     <CartContext.Provider
+//       value={{
+//         cartItems,
+//         addToCart,
+//         increaseQty,
+//         decreaseQty,
+//         removeFromCart,
+//         clearCart,
+//       }}
+//     >
+//       {children}
+//     </CartContext.Provider>
+//   );
+// }
+
+// export function useCart() {
+//   const context = useContext(CartContext);
+//   if (!context) {
+//     throw new Error("useCart must be used within CartProvider");
+//   }
+//   return context;
+// }
+
+
 "use client";
 
 import { createContext, useContext, useEffect, useState } from "react";
@@ -404,49 +696,80 @@ type CartItem = {
 type CartContextType = {
   cartItems: CartItem[];
   addToCart: (item: CartItem) => void;
+  increaseQty: (id: string) => void;
+  decreaseQty: (id: string) => void;
+  removeFromCart: (id: string) => void;
+  clearCart: () => void;
 };
 
-const CartContext = createContext<CartContextType | undefined>(
-  undefined
-);
+const CartContext = createContext<CartContextType | undefined>(undefined);
 
-export function CartProvider({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
-  // ✅ ONLY place we read localStorage
+export function CartProvider({ children }: { children: React.ReactNode }) {
+  // ✅ Read localStorage ONLY once (lazy init)
   const [cartItems, setCartItems] = useState<CartItem[]>(() => {
     if (typeof window === "undefined") return [];
-    const storedCart = localStorage.getItem("cart");
-    return storedCart ? JSON.parse(storedCart) : [];
+    try {
+      const stored = localStorage.getItem("cart");
+      return stored ? JSON.parse(stored) : [];
+    } catch {
+      return [];
+    }
   });
 
-  // ✅ ONLY syncing state → localStorage
+  // ✅ Sync changes to localStorage (NO warning)
   useEffect(() => {
     localStorage.setItem("cart", JSON.stringify(cartItems));
   }, [cartItems]);
 
   const addToCart = (item: CartItem) => {
     setCartItems((prev) => {
-      const existing = prev.find(
-        (p) => p._id === item._id
-      );
-
+      const existing = prev.find((p) => p._id === item._id);
       if (existing) {
         return prev.map((p) =>
-          p._id === item._id
-            ? { ...p, qty: p.qty + 1 }
-            : p
+          p._id === item._id ? { ...p, qty: p.qty + 1 } : p
         );
       }
-
-      return [...prev, item];
+      return [...prev, { ...item, qty: 1 }];
     });
   };
 
+  const increaseQty = (id: string) => {
+    setCartItems((prev) =>
+      prev.map((item) =>
+        item._id === id ? { ...item, qty: item.qty + 1 } : item
+      )
+    );
+  };
+
+  const decreaseQty = (id: string) => {
+    setCartItems((prev) =>
+      prev
+        .map((item) =>
+          item._id === id ? { ...item, qty: item.qty - 1 } : item
+        )
+        .filter((item) => item.qty > 0)
+    );
+  };
+
+  const removeFromCart = (id: string) => {
+    setCartItems((prev) => prev.filter((item) => item._id !== id));
+  };
+
+  const clearCart = () => {
+    setCartItems([]);
+  };
+
   return (
-    <CartContext.Provider value={{ cartItems, addToCart }}>
+    <CartContext.Provider
+      value={{
+        cartItems,
+        addToCart,
+        increaseQty,
+        decreaseQty,
+        removeFromCart,
+        clearCart,
+      }}
+    >
       {children}
     </CartContext.Provider>
   );

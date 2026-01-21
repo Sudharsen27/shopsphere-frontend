@@ -35,10 +35,132 @@
 // }
 
 
+// import type { Metadata } from "next";
+// import { Geist, Geist_Mono } from "next/font/google";
+// import "./globals.css";
+// import { CartProvider } from "./context/CartContext";
+
+// const geistSans = Geist({
+//   variable: "--font-geist-sans",
+//   subsets: ["latin"],
+// });
+
+// const geistMono = Geist_Mono({
+//   variable: "--font-geist-mono",
+//   subsets: ["latin"],
+// });
+
+// export const metadata: Metadata = {
+//   title: "ShopSphere",
+//   description: "Modern D2C e-commerce platform",
+// };
+
+// export default function RootLayout({
+//   children,
+// }: Readonly<{
+//   children: React.ReactNode;
+// }>) {
+//   return (
+//     <html lang="en" suppressHydrationWarning>
+//       <body
+//         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+//       >
+//         <CartProvider>{children}</CartProvider>
+//       </body>
+//     </html>
+//   );
+// }
+
+
+// import type { Metadata } from "next";
+// import { Geist, Geist_Mono } from "next/font/google";
+// import "./globals.css";
+// import { CartProvider } from "./context/CartContext";
+// import Navbar from "./components/Navbar";
+
+// const geistSans = Geist({
+//   variable: "--font-geist-sans",
+//   subsets: ["latin"],
+// });
+
+// const geistMono = Geist_Mono({
+//   variable: "--font-geist-mono",
+//   subsets: ["latin"],
+// });
+
+// export const metadata: Metadata = {
+//   title: "ShopSphere",
+//   description: "Modern D2C e-commerce platform",
+// };
+
+// export default function RootLayout({
+//   children,
+// }: Readonly<{
+//   children: React.ReactNode;
+// }>) {
+//   return (
+//     <html lang="en" suppressHydrationWarning>
+//       <body
+//         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+//       >
+//         <CartProvider>
+//           <Navbar />      {/* ✅ Cart link lives here */}
+//           {children}
+//         </CartProvider>
+//       </body>
+//     </html>
+//   );
+// }
+
+
+// import type { Metadata } from "next";
+// import { Geist, Geist_Mono } from "next/font/google";
+// import "./globals.css";
+// import { CartProvider } from "./context/CartContext";
+// import dynamic from "next/dynamic";
+
+// // ✅ Client-only Navbar (NO SSR)
+// const Navbar = dynamic(() => import("./components/Navbar"), {
+//   ssr: false,
+// });
+
+// const geistSans = Geist({
+//   variable: "--font-geist-sans",
+//   subsets: ["latin"],
+// });
+
+// const geistMono = Geist_Mono({
+//   variable: "--font-geist-mono",
+//   subsets: ["latin"],
+// });
+
+// export const metadata: Metadata = {
+//   title: "ShopSphere",
+//   description: "Modern D2C e-commerce platform",
+// };
+
+// export default function RootLayout({
+//   children,
+// }: {
+//   children: React.ReactNode;
+// }) {
+//   return (
+//     <html lang="en">
+//       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
+//         <CartProvider>
+//           <Navbar />   {/* ✅ client-only */}
+//           {children}
+//         </CartProvider>
+//       </body>
+//     </html>
+//   );
+// }
+
+
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import { CartProvider } from "./context/CartContext";
+import ClientLayout from "./ClientLayout";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -57,15 +179,15 @@ export const metadata: Metadata = {
 
 export default function RootLayout({
   children,
-}: Readonly<{
+}: {
   children: React.ReactNode;
-}>) {
+}) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-      >
-        <CartProvider>{children}</CartProvider>
+      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
+        <ClientLayout>
+          {children}
+        </ClientLayout>
       </body>
     </html>
   );
