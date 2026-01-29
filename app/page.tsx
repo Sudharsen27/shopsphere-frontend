@@ -204,83 +204,91 @@
 // }
 
 
-import Image from "next/image";
-import Link from "next/link";
+// import Image from "next/image";
+// import Link from "next/link";
 
-type Product = {
-  _id: string;
-  name: string;
-  price: number;
-  image?: string;
-};
+// type Product = {
+//   _id: string;
+//   name: string;
+//   price: number;
+//   image?: string;
+// };
 
-// 🔹 Helper to fix image path issues
-function getImageSrc(image?: string) {
-  if (!image) return "/placeholder.png";
+// // 🔹 Helper to fix image path issues
+// function getImageSrc(image?: string) {
+//   if (!image) return "/placeholder.png";
 
-  // Absolute URL (Cloudinary, S3, etc.)
-  if (image.startsWith("http")) {
-    return image;
-  }
+//   // Absolute URL (Cloudinary, S3, etc.)
+//   if (image.startsWith("http")) {
+//     return image;
+//   }
 
-  // Relative image without leading slash (e.g. "test.jpg")
-  if (!image.startsWith("/")) {
-    return `/${image}`;
-  }
+//   // Relative image without leading slash (e.g. "test.jpg")
+//   if (!image.startsWith("/")) {
+//     return `/${image}`;
+//   }
 
-  return image;
-}
+//   return image;
+// }
 
-async function getProducts(): Promise<Product[]> {
-  const res = await fetch(
-    `${process.env.NEXT_PUBLIC_API_URL}/products`,
-    { cache: "no-store" }
-  );
+// async function getProducts(): Promise<Product[]> {
+//   const res = await fetch(
+//     `${process.env.NEXT_PUBLIC_API_URL}/products`,
+//     { cache: "no-store" }
+//   );
 
-  if (!res.ok) {
-    throw new Error("Failed to fetch products");
-  }
+//   if (!res.ok) {
+//     throw new Error("Failed to fetch products");
+//   }
 
-  return res.json();
-}
+//   return res.json();
+// }
+
+// export default async function HomePage() {
+//   const products = await getProducts();
+
+//   return (
+//     <main className="p-6">
+//       <h1 className="text-3xl font-bold mb-6">
+//         ShopSphere
+//       </h1>
+
+//       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+//         {products.map((product) => (
+//           <Link
+//             key={product._id}
+//             href={`/product/${product._id}`}
+//             className="block"
+//           >
+//             <div className="border rounded-lg p-4 hover:shadow-lg transition cursor-pointer">
+//               <div className="relative h-40 w-full mb-3 bg-gray-100 rounded">
+//                 <Image
+//                   src={getImageSrc(product.image)}
+//                   alt={product.name}
+//                   fill
+//                   className="object-cover rounded"
+//                 />
+//               </div>
+
+//               <h2 className="text-lg font-semibold">
+//                 {product.name}
+//               </h2>
+
+//               <p className="text-gray-700">
+//                 ₹{product.price}
+//               </p>
+//             </div>
+//           </Link>
+//         ))}
+//       </div>
+//     </main>
+//   );
+// }
+
+import HomeClient from "./components/HomeClient";
+
+
 
 export default async function HomePage() {
-  const products = await getProducts();
-
-  return (
-    <main className="p-6">
-      <h1 className="text-3xl font-bold mb-6">
-        ShopSphere
-      </h1>
-
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {products.map((product) => (
-          <Link
-            key={product._id}
-            href={`/product/${product._id}`}
-            className="block"
-          >
-            <div className="border rounded-lg p-4 hover:shadow-lg transition cursor-pointer">
-              <div className="relative h-40 w-full mb-3 bg-gray-100 rounded">
-                <Image
-                  src={getImageSrc(product.image)}
-                  alt={product.name}
-                  fill
-                  className="object-cover rounded"
-                />
-              </div>
-
-              <h2 className="text-lg font-semibold">
-                {product.name}
-              </h2>
-
-              <p className="text-gray-700">
-                ₹{product.price}
-              </p>
-            </div>
-          </Link>
-        ))}
-      </div>
-    </main>
-  );
+  return <HomeClient />;
 }

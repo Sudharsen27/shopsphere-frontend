@@ -157,10 +157,92 @@
 // }
 
 
+// import type { Metadata } from "next";
+// import { Geist, Geist_Mono } from "next/font/google";
+// import "./globals.css";
+// import ClientLayout from "./ClientLayout";
+
+// const geistSans = Geist({
+//   variable: "--font-geist-sans",
+//   subsets: ["latin"],
+// });
+
+// const geistMono = Geist_Mono({
+//   variable: "--font-geist-mono",
+//   subsets: ["latin"],
+// });
+
+// export const metadata: Metadata = {
+//   title: "ShopSphere",
+//   description: "Modern D2C e-commerce platform",
+// };
+
+// export default function RootLayout({
+//   children,
+// }: {
+//   children: React.ReactNode;
+// }) {
+//   return (
+//     <html lang="en" suppressHydrationWarning>
+//       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
+//         <ClientLayout>
+//           {children}
+//         </ClientLayout>
+//       </body>
+//     </html>
+//   );
+// }
+
+
+// import type { Metadata } from "next";
+// import { Geist, Geist_Mono } from "next/font/google";
+// import "./globals.css";
+
+// import ClientLayout from "./ClientLayout";
+// import { AuthProvider } from "./context/AuthContext";
+
+// const geistSans = Geist({
+//   variable: "--font-geist-sans",
+//   subsets: ["latin"],
+// });
+
+// const geistMono = Geist_Mono({
+//   variable: "--font-geist-mono",
+//   subsets: ["latin"],
+// });
+
+// export const metadata: Metadata = {
+//   title: "ShopSphere",
+//   description: "Modern D2C e-commerce platform",
+// };
+
+// export default function RootLayout({
+//   children,
+// }: {
+//   children: React.ReactNode;
+// }) {
+//   return (
+//     <html lang="en" suppressHydrationWarning>
+//       <body
+//         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+//       >
+//         <AuthProvider>
+//           <ClientLayout>
+//             {children}
+//           </ClientLayout>
+//         </AuthProvider>
+//       </body>
+//     </html>
+//   );
+// }
+
+
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+
 import ClientLayout from "./ClientLayout";
+import { AuthProvider } from "./context/AuthContext";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -184,10 +266,16 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
-        <ClientLayout>
-          {children}
-        </ClientLayout>
+      <body
+        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+      >
+        {/* Auth context must wrap the entire app */}
+        <AuthProvider>
+          {/* Client-only layout (Navbar, Footer, etc.) */}
+          <ClientLayout>
+            {children}
+          </ClientLayout>
+        </AuthProvider>
       </body>
     </html>
   );

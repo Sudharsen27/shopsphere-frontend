@@ -755,8 +755,12 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     setCartItems((prev) => prev.filter((item) => item._id !== id));
   };
 
+  /** Clears cart only. Does NOT touch userInfo or any other localStorage keys. */
   const clearCart = () => {
     setCartItems([]);
+    if (typeof window !== "undefined") {
+      localStorage.setItem("cart", "[]");
+    }
   };
 
   return (
