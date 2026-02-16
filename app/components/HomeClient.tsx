@@ -225,39 +225,59 @@ export default function HomeClient() {
      🛒 SHOP PAGE (LOGGED IN)
      ===================================================== */
   return (
-    <main className="p-6">
-      <h1 className="text-3xl font-bold mb-6">
-        ShopSphere
-      </h1>
-
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-        {products.map((product) => (
-          <Link
-            key={product._id}
-            href={`/product/${product._id}`}
-            className="block"
-          >
-            <div className="border rounded-lg p-4 hover:shadow-lg transition">
-              <div className="relative h-40 w-full mb-3 bg-gray-100 rounded">
-                <Image
-                  src={getImageSrc(product.image)}
-                  alt={product.name}
-                  fill
-                  className="object-cover rounded"
-                />
-              </div>
-
-              <h2 className="text-lg font-semibold">
-                {product.name}
-              </h2>
-
-              <p className="text-gray-700">
-                ₹{product.price}
-              </p>
-            </div>
-          </Link>
-        ))}
+    <main className="p-6 max-w-7xl mx-auto">
+      <div className="mb-8">
+        <h1 className="text-4xl font-bold mb-2">
+          Welcome to ShopSphere
+        </h1>
+        <p className="text-gray-400">
+          Discover amazing products at great prices
+        </p>
       </div>
+
+      {products.length === 0 ? (
+        <div className="text-center py-20">
+          <div className="text-6xl mb-4">🛍️</div>
+          <h2 className="text-2xl font-semibold mb-2">
+            No products available
+          </h2>
+          <p className="text-gray-400 mb-6">
+            Products will appear here once they are added to the store.
+          </p>
+          <p className="text-sm text-gray-500">
+            Run <code className="bg-gray-800 px-2 py-1 rounded">npm run seed</code> in the backend to add sample products.
+          </p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          {products.map((product) => (
+            <Link
+              key={product._id}
+              href={`/product/${product._id}`}
+              className="block group"
+            >
+              <div className="border border-gray-700 rounded-lg p-4 hover:border-green-500 hover:shadow-lg transition-all duration-200 bg-gray-900">
+                <div className="relative h-48 w-full mb-4 bg-gray-800 rounded-lg overflow-hidden">
+                  <Image
+                    src={getImageSrc(product.image)}
+                    alt={product.name}
+                    fill
+                    className="object-cover rounded group-hover:scale-105 transition-transform duration-200"
+                  />
+                </div>
+
+                <h2 className="text-lg font-semibold mb-2 line-clamp-2 group-hover:text-green-400 transition-colors">
+                  {product.name}
+                </h2>
+
+                <p className="text-xl font-bold text-green-500">
+                  ₹{product.price.toLocaleString()}
+                </p>
+              </div>
+            </Link>
+          ))}
+        </div>
+      )}
     </main>
   );
 }
