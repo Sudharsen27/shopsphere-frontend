@@ -132,6 +132,27 @@ export const authApi = {
       };
     }>("/auth/profile");
   },
+
+  updateProfile: async (name: string, email: string) => {
+    return fetchApi<{
+      user: {
+        id: string;
+        name: string;
+        email: string;
+        role: string;
+      };
+    }>("/auth/profile", {
+      method: "PUT",
+      body: JSON.stringify({ name, email }),
+    });
+  },
+
+  changePassword: async (currentPassword: string, newPassword: string) => {
+    return fetchApi<{ message: string }>("/auth/password", {
+      method: "PUT",
+      body: JSON.stringify({ currentPassword, newPassword }),
+    });
+  },
 };
 
 // Products API

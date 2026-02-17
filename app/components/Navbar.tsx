@@ -279,6 +279,10 @@ export default function Navbar() {
               My Orders
             </Link>
 
+            <Link href="/profile" className="font-medium">
+              Profile
+            </Link>
+
             {userInfo.role === "admin" && (
               <Link href="/admin" className="font-medium text-green-400 hover:text-green-300">
                 Admin

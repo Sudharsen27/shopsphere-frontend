@@ -21,9 +21,10 @@ type Product = {
 };
 
 function getImageSrc(image?: string) {
-  if (!image) return "/placeholder.png";
+  const placeholder = "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=500&auto=format&fit=crop&q=80";
+  if (!image) return placeholder;
   if (image.startsWith("http")) return image;
-  if (!image.startsWith("/")) return `/${image}`;
+  if (!image.startsWith("/")) return placeholder;
   return image;
 }
 
@@ -143,6 +144,13 @@ export default function AdminProductsPage() {
                             alt={product.name}
                             fill
                             className="object-cover rounded"
+                            onError={(e) => {
+                              const target = e.target as HTMLImageElement;
+                              if (!target.src.includes("photo-1505740420928")) {
+                                target.src = "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=500&auto=format&fit=crop&q=80";
+                              }
+                            }}
+                            unoptimized={product.image?.includes("unsplash.com") || !product.image}
                           />
                         </div>
                       </td>
