@@ -194,22 +194,22 @@ export default function OrderDetailsPage() {
   }
 
   return (
-    <div className="max-w-4xl mx-auto p-6">
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold">Order Details</h1>
+    <div className="max-w-4xl mx-auto p-4 sm:p-6">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-0 mb-4 sm:mb-6">
+        <h1 className="text-xl sm:text-2xl font-bold">Order Details</h1>
         <Link
           href="/orders"
-          className="text-blue-400 hover:text-blue-300 underline"
+          className="text-sm sm:text-base text-blue-400 hover:text-blue-300 underline"
         >
           ← Back to Orders
         </Link>
       </div>
 
       {/* Order Status Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-        <div className="border border-gray-700 p-4 rounded-lg bg-gray-900">
-          <p className="text-sm text-gray-400 mb-1">Payment Status</p>
-          <p className={`text-lg font-semibold ${order.isPaid ? "text-green-400" : "text-yellow-400"}`}>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 mb-4 sm:mb-6">
+        <div className="border border-gray-700 p-3 sm:p-4 rounded-lg bg-gray-900">
+          <p className="text-xs sm:text-sm text-gray-400 mb-1">Payment Status</p>
+          <p className={`text-base sm:text-lg font-semibold ${order.isPaid ? "text-green-400" : "text-yellow-400"}`}>
             {order.isPaid ? "✓ Paid" : "Pending"}
           </p>
           {order.isPaid && order.paidAt && (
@@ -219,9 +219,9 @@ export default function OrderDetailsPage() {
           )}
         </div>
 
-        <div className="border border-gray-700 p-4 rounded-lg bg-gray-900">
-          <p className="text-sm text-gray-400 mb-1">Delivery Status</p>
-          <p className={`text-lg font-semibold ${order.isDelivered ? "text-green-400" : "text-yellow-400"}`}>
+        <div className="border border-gray-700 p-3 sm:p-4 rounded-lg bg-gray-900">
+          <p className="text-xs sm:text-sm text-gray-400 mb-1">Delivery Status</p>
+          <p className={`text-base sm:text-lg font-semibold ${order.isDelivered ? "text-green-400" : "text-yellow-400"}`}>
             {order.isDelivered ? "✓ Delivered" : "Processing"}
           </p>
           {order.isDelivered && order.deliveredAt && (
@@ -233,18 +233,18 @@ export default function OrderDetailsPage() {
       </div>
 
       {/* Order Info */}
-      <div className="border border-gray-700 p-6 rounded-lg bg-gray-900 mb-6">
-        <h2 className="text-xl font-semibold mb-4">Order Information</h2>
-        <div className="space-y-2 text-sm">
-          <div className="flex justify-between">
+      <div className="border border-gray-700 p-4 sm:p-6 rounded-lg bg-gray-900 mb-4 sm:mb-6">
+        <h2 className="text-lg sm:text-xl font-semibold mb-3 sm:mb-4">Order Information</h2>
+        <div className="space-y-2 text-xs sm:text-sm">
+          <div className="flex flex-col sm:flex-row sm:justify-between gap-1 sm:gap-0">
             <span className="text-gray-400">Order ID:</span>
-            <span className="font-mono">{order._id}</span>
+            <span className="font-mono break-all sm:break-normal">{order._id}</span>
           </div>
-          <div className="flex justify-between">
+          <div className="flex flex-col sm:flex-row sm:justify-between gap-1 sm:gap-0">
             <span className="text-gray-400">Order Date:</span>
             <span>{new Date(order.createdAt).toLocaleString()}</span>
           </div>
-          <div className="flex justify-between">
+          <div className="flex flex-col sm:flex-row sm:justify-between gap-1 sm:gap-0">
             <span className="text-gray-400">Payment Method:</span>
             <span className="uppercase">{order.paymentMethod}</span>
           </div>
@@ -252,15 +252,15 @@ export default function OrderDetailsPage() {
       </div>
 
       {/* Order Items */}
-      <div className="border border-gray-700 p-6 rounded-lg bg-gray-900 mb-6">
-        <h2 className="text-xl font-semibold mb-4">Order Items</h2>
-        <div className="space-y-4">
+      <div className="border border-gray-700 p-4 sm:p-6 rounded-lg bg-gray-900 mb-4 sm:mb-6">
+        <h2 className="text-lg sm:text-xl font-semibold mb-3 sm:mb-4">Order Items</h2>
+        <div className="space-y-3 sm:space-y-4">
           {order.orderItems.map((item, idx) => (
             <div
               key={idx}
-              className="flex gap-4 pb-4 border-b border-gray-700 last:border-0 last:pb-0"
+              className="flex gap-3 sm:gap-4 pb-3 sm:pb-4 border-b border-gray-700 last:border-0 last:pb-0"
             >
-              <div className="relative w-20 h-20 bg-gray-800 rounded-lg overflow-hidden flex-shrink-0">
+              <div className="relative w-16 h-16 sm:w-20 sm:h-20 bg-gray-800 rounded-lg overflow-hidden flex-shrink-0">
                 <Image
                   src={getImageSrc(item.image)}
                   alt={item.name}
@@ -275,15 +275,15 @@ export default function OrderDetailsPage() {
                   unoptimized={item.image?.includes("unsplash.com") || !item.image}
                 />
               </div>
-              <div className="flex-1">
+              <div className="flex-1 min-w-0">
                 <Link
                   href={`/product/${item.product}`}
-                  className="text-lg font-semibold hover:text-green-400 transition-colors"
+                  className="text-base sm:text-lg font-semibold hover:text-green-400 transition-colors break-words"
                 >
                   {item.name}
                 </Link>
-                <p className="text-sm text-gray-400">Quantity: {item.qty}</p>
-                <p className="text-green-400 font-semibold mt-1">
+                <p className="text-xs sm:text-sm text-gray-400">Quantity: {item.qty}</p>
+                <p className="text-green-400 font-semibold mt-1 text-sm sm:text-base">
                   ₹{(item.price * item.qty).toLocaleString()}
                 </p>
               </div>

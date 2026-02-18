@@ -83,8 +83,11 @@ export default function LoginPage() {
       router.replace("/");
     } catch (err) {
       if (err instanceof ApiError) {
-        // Handle validation errors from backend
-        if (err.errors && err.errors.length > 0) {
+        // Handle rate limiting specifically
+        if (err.status === 429) {
+          setError("Too many login attempts. Please wait a few minutes before trying again.");
+        } else if (err.errors && err.errors.length > 0) {
+          // Handle validation errors from backend
           const backendErrors: { email?: string; password?: string } = {};
           err.errors.forEach((error) => {
             if (error.field === "email") {
@@ -94,8 +97,10 @@ export default function LoginPage() {
             }
           });
           setFieldErrors(backendErrors);
+          setError(err.message);
+        } else {
+          setError(err.message);
         }
-        setError(err.message);
       } else {
         setError("An unexpected error occurred. Please try again.");
       }
@@ -117,14 +122,14 @@ export default function LoginPage() {
   }
 
   return (
-    <section className="min-h-[80vh] flex items-center px-6 py-12">
-      <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
+    <section className="min-h-[80vh] flex items-center px-4 sm:px-6 py-8 sm:py-12">
+      <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-8 sm:gap-12 items-center w-full">
         {/* LEFT SIDE – LOGIN FORM */}
-        <div className="max-w-md w-full mx-auto border border-gray-700 rounded-lg p-8 bg-gray-900/50 backdrop-blur-sm">
-          <h1 className="text-3xl font-bold mb-2 text-center text-white">
+        <div className="max-w-md w-full mx-auto border border-gray-700 rounded-lg p-6 sm:p-8 bg-gray-900/50 backdrop-blur-sm">
+          <h1 className="text-2xl sm:text-3xl font-bold mb-2 text-center text-white">
             Login to ShopSphere
           </h1>
-          <p className="text-center text-gray-400 mb-6">
+          <p className="text-center text-sm sm:text-base text-gray-400 mb-4 sm:mb-6">
             Welcome back! Please login to your account.
           </p>
 

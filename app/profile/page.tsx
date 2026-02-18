@@ -122,19 +122,19 @@ export default function ProfilePage() {
 
   return (
     <ProtectedRoute>
-      <div className="min-h-screen bg-black text-white p-6">
+      <div className="min-h-screen bg-black text-white p-4 sm:p-6">
         <div className="max-w-4xl mx-auto">
-          <h1 className="text-4xl font-bold mb-8">My Profile</h1>
+          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold mb-4 sm:mb-8">My Profile</h1>
 
           {/* Tabs */}
-          <div className="flex gap-4 mb-6 border-b border-gray-700">
+          <div className="flex gap-2 sm:gap-4 mb-4 sm:mb-6 border-b border-gray-700 overflow-x-auto">
             <button
               onClick={() => {
                 setActiveTab("profile");
                 setError(null);
                 setSuccess(null);
               }}
-              className={`px-6 py-3 font-medium transition ${
+              className={`px-4 sm:px-6 py-2 sm:py-3 text-sm sm:text-base font-medium transition whitespace-nowrap ${
                 activeTab === "profile"
                   ? "border-b-2 border-green-500 text-green-400"
                   : "text-gray-400 hover:text-white"
@@ -148,7 +148,7 @@ export default function ProfilePage() {
                 setError(null);
                 setSuccess(null);
               }}
-              className={`px-6 py-3 font-medium transition ${
+              className={`px-4 sm:px-6 py-2 sm:py-3 text-sm sm:text-base font-medium transition whitespace-nowrap ${
                 activeTab === "password"
                   ? "border-b-2 border-green-500 text-green-400"
                   : "text-gray-400 hover:text-white"
@@ -160,22 +160,22 @@ export default function ProfilePage() {
 
           {/* Messages */}
           {error && (
-            <div className="mb-6 p-4 bg-red-500/10 border border-red-500/50 rounded text-red-400">
+            <div className="mb-4 sm:mb-6 p-3 sm:p-4 bg-red-500/10 border border-red-500/50 rounded text-red-400 text-sm sm:text-base">
               {error}
             </div>
           )}
 
           {success && (
-            <div className="mb-6 p-4 bg-green-500/10 border border-green-500/50 rounded text-green-400">
+            <div className="mb-4 sm:mb-6 p-3 sm:p-4 bg-green-500/10 border border-green-500/50 rounded text-green-400 text-sm sm:text-base">
               {success}
             </div>
           )}
 
           {/* Profile Tab */}
           {activeTab === "profile" && (
-            <form onSubmit={handleProfileUpdate} className="space-y-6">
-              <div className="bg-gray-900 border border-gray-700 rounded-lg p-6">
-                <h2 className="text-2xl font-bold mb-6">Profile Information</h2>
+            <form onSubmit={handleProfileUpdate} className="space-y-4 sm:space-y-6">
+              <div className="bg-gray-900 border border-gray-700 rounded-lg p-4 sm:p-6">
+                <h2 className="text-xl sm:text-2xl font-bold mb-4 sm:mb-6">Profile Information</h2>
 
                 <div className="space-y-4">
                   <div>
@@ -188,13 +188,13 @@ export default function ProfilePage() {
                       onChange={(e) =>
                         setProfileData({ ...profileData, name: e.target.value })
                       }
-                      className="w-full px-4 py-3 bg-black border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-green-500"
+                      className="w-full px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base bg-black border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-green-500"
                       required
                     />
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium mb-2 text-gray-300">
+                    <label className="block text-xs sm:text-sm font-medium mb-2 text-gray-300">
                       Email Address
                     </label>
                     <input
@@ -206,20 +206,20 @@ export default function ProfilePage() {
                           email: e.target.value,
                         })
                       }
-                      className="w-full px-4 py-3 bg-black border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-green-500"
+                      className="w-full px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base bg-black border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-green-500"
                       required
                     />
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium mb-2 text-gray-300">
+                    <label className="block text-xs sm:text-sm font-medium mb-2 text-gray-300">
                       Role
                     </label>
                     <input
                       type="text"
                       value={userInfo?.role || "user"}
                       disabled
-                      className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-gray-400 cursor-not-allowed"
+                      className="w-full px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base bg-gray-800 border border-gray-700 rounded-lg text-gray-400 cursor-not-allowed"
                     />
                   </div>
                 </div>
@@ -227,7 +227,7 @@ export default function ProfilePage() {
                 <button
                   type="submit"
                   disabled={loading}
-                  className="mt-6 w-full bg-green-600 hover:bg-green-700 disabled:opacity-70 disabled:cursor-not-allowed text-white font-semibold py-3 rounded-lg transition"
+                  className="mt-4 sm:mt-6 w-full bg-green-600 hover:bg-green-700 disabled:opacity-70 disabled:cursor-not-allowed text-white font-semibold py-2 sm:py-3 text-sm sm:text-base rounded-lg transition"
                 >
                   {loading ? "Updating..." : "Update Profile"}
                 </button>
@@ -237,9 +237,9 @@ export default function ProfilePage() {
 
           {/* Password Tab */}
           {activeTab === "password" && (
-            <form onSubmit={handlePasswordChange} className="space-y-6">
-              <div className="bg-gray-900 border border-gray-700 rounded-lg p-6">
-                <h2 className="text-2xl font-bold mb-6">Change Password</h2>
+            <form onSubmit={handlePasswordChange} className="space-y-4 sm:space-y-6">
+              <div className="bg-gray-900 border border-gray-700 rounded-lg p-4 sm:p-6">
+                <h2 className="text-xl sm:text-2xl font-bold mb-4 sm:mb-6">Change Password</h2>
 
                 <div className="space-y-4">
                   <div>

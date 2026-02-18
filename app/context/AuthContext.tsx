@@ -258,9 +258,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               id: parsedUser.id || parsedUser._id,
             });
           } catch (error) {
-            // Token invalid or expired, clear storage
-            localStorage.removeItem("userInfo");
-            setUserInfo(null);
+            // Handle rate limiting gracefully - don't clear session if it's just rate limit
+            if (error instanceof ApiError && error.status === 429) {
+              // Rate limited - use stored user info anyway (token might still be valid)
+              // This prevents clearing session due to rate limits
+              setUserInfo({
+                ...parsedUser,
+                id: parsedUser.id || parsedUser._id,
+              });
+            } else {
+              // Token invalid or expired, clear storage
+              localStorage.removeItem("userInfo");
+              setUserInfo(null);
+            }
           }
         }
       } catch (error) {

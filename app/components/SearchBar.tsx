@@ -34,10 +34,10 @@ export default function SearchBar({ onSearch, initialValue = "" }: SearchBarProp
           placeholder="Search products..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          className="w-full px-4 py-3 pl-12 pr-4 bg-gray-900 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+          className="w-full px-3 sm:px-4 py-2 sm:py-3 pl-10 sm:pl-12 pr-20 sm:pr-24 bg-gray-900 border border-gray-700 rounded-lg text-sm sm:text-base text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
         />
         <svg
-          className="absolute left-4 w-5 h-5 text-gray-400"
+          className="absolute left-3 sm:left-4 w-4 h-4 sm:w-5 sm:h-5 text-gray-400"
           fill="none"
           stroke="currentColor"
           viewBox="0 0 24 24"
@@ -51,7 +51,7 @@ export default function SearchBar({ onSearch, initialValue = "" }: SearchBarProp
         </svg>
         <button
           type="submit"
-          className="absolute right-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-md transition-colors"
+          className="absolute right-1 sm:right-2 px-2 sm:px-4 py-1.5 sm:py-2 bg-green-600 hover:bg-green-700 text-white text-xs sm:text-sm rounded-md transition-colors"
         >
           Search
         </button>

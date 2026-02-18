@@ -759,73 +759,83 @@ export default function CheckoutPage() {
   };
 
   return (
-    <div className="max-w-4xl mx-auto p-6">
-      <h1 className="text-2xl font-bold mb-6">Checkout</h1>
+    <div className="max-w-4xl mx-auto p-4 sm:p-6">
+      <h1 className="text-xl sm:text-2xl font-bold mb-4 sm:mb-6">Checkout</h1>
 
-      {/* 🏠 SHIPPING ADDRESS */}
-      <div className="mb-8 space-y-4">
-        <h2 className="text-lg font-semibold">Shipping Address</h2>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* 🏠 SHIPPING ADDRESS */}
+        <div className="lg:col-span-2 mb-6 lg:mb-0">
+          <h2 className="text-lg sm:text-xl font-semibold mb-4">Shipping Address</h2>
+          <div className="space-y-3 sm:space-y-4">
+            <input
+              type="text"
+              placeholder="Address"
+              className="w-full p-2 sm:p-3 border border-gray-700 rounded bg-gray-900 text-white text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-green-500"
+              value={address}
+              onChange={(e) => setAddress(e.target.value)}
+            />
 
-        <input
-          type="text"
-          placeholder="Address"
-          className="w-full p-3 border rounded bg-black text-white"
-          value={address}
-          onChange={(e) => setAddress(e.target.value)}
-        />
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+              <input
+                type="text"
+                placeholder="City"
+                className="w-full p-2 sm:p-3 border border-gray-700 rounded bg-gray-900 text-white text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-green-500"
+                value={city}
+                onChange={(e) => setCity(e.target.value)}
+              />
 
-        <input
-          type="text"
-          placeholder="City"
-          className="w-full p-3 border rounded bg-black text-white"
-          value={city}
-          onChange={(e) => setCity(e.target.value)}
-        />
+              <input
+                type="text"
+                placeholder="Postal Code"
+                className="w-full p-2 sm:p-3 border border-gray-700 rounded bg-gray-900 text-white text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-green-500"
+                value={postalCode}
+                onChange={(e) => setPostalCode(e.target.value)}
+              />
+            </div>
 
-        <input
-          type="text"
-          placeholder="Postal Code"
-          className="w-full p-3 border rounded bg-black text-white"
-          value={postalCode}
-          onChange={(e) => setPostalCode(e.target.value)}
-        />
-
-        <input
-          type="text"
-          placeholder="Country"
-          className="w-full p-3 border rounded bg-black text-white"
-          value={country}
-          onChange={(e) => setCountry(e.target.value)}
-        />
-      </div>
-
-      {/* 🛒 ORDER SUMMARY */}
-      <div className="mb-6">
-        {cartItems.map((item) => (
-          <div
-            key={item._id}
-            className="flex justify-between py-3 border-b"
-          >
-            <span>
-              {item.name} × {item.qty}
-            </span>
-            <span>₹{item.price * item.qty}</span>
+            <input
+              type="text"
+              placeholder="Country"
+              className="w-full p-2 sm:p-3 border border-gray-700 rounded bg-gray-900 text-white text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-green-500"
+              value={country}
+              onChange={(e) => setCountry(e.target.value)}
+            />
           </div>
-        ))}
-      </div>
+        </div>
 
-      <div className="flex justify-between font-bold text-lg mb-6">
-        <span>Total</span>
-        <span>₹{total}</span>
-      </div>
+        {/* 🛒 ORDER SUMMARY */}
+        <div className="lg:col-span-1">
+          <div className="bg-gray-900 border border-gray-700 rounded-lg p-4 sm:p-6 sticky top-20">
+            <h2 className="text-lg font-semibold mb-4">Order Summary</h2>
+            <div className="space-y-2 mb-4">
+              {cartItems.map((item) => (
+                <div
+                  key={item._id}
+                  className="flex justify-between text-sm sm:text-base py-2 border-b border-gray-700"
+                >
+                  <span className="flex-1 pr-2">
+                    {item.name} × {item.qty}
+                  </span>
+                  <span className="font-medium">₹{(item.price * item.qty).toLocaleString()}</span>
+                </div>
+              ))}
+            </div>
 
-      <button
-        onClick={placeOrder}
-        disabled={placing}
-        className="w-full bg-green-600 hover:bg-green-700 disabled:opacity-70 disabled:cursor-not-allowed transition py-3 rounded-md font-medium text-white"
-      >
-        {placing ? "Placing order..." : "Place Order"}
-      </button>
+            <div className="flex justify-between font-bold text-lg sm:text-xl mb-6 pt-4 border-t border-gray-700">
+              <span>Total</span>
+              <span className="text-green-400">₹{total.toLocaleString()}</span>
+            </div>
+
+            <button
+              onClick={placeOrder}
+              disabled={placing}
+              className="w-full bg-green-600 hover:bg-green-700 disabled:opacity-70 disabled:cursor-not-allowed transition py-2 sm:py-3 rounded-md font-medium text-white text-sm sm:text-base"
+            >
+              {placing ? "Placing order..." : "Place Order"}
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

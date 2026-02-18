@@ -124,6 +124,7 @@ import Image from "next/image";
 import Link from "next/link";
 import SearchBar from "./SearchBar";
 import ProductFilter from "./ProductFilter";
+import WishlistButton from "./WishlistButton";
 
 type Product = {
   _id: string;
@@ -348,12 +349,12 @@ export default function HomeClient() {
      🛒 SHOP PAGE (LOGGED IN)
      ===================================================== */
   return (
-    <main className="p-6 max-w-7xl mx-auto">
-      <div className="mb-8">
-        <h1 className="text-4xl font-bold mb-2">
+    <main className="p-4 sm:p-6 max-w-7xl mx-auto">
+      <div className="mb-6 sm:mb-8">
+        <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold mb-2">
           Welcome to ShopSphere
         </h1>
-        <p className="text-gray-400">
+        <p className="text-sm sm:text-base text-gray-400">
           Discover amazing products at great prices
         </p>
       </div>
@@ -397,12 +398,19 @@ export default function HomeClient() {
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {filteredProducts.map((product) => (
-              <Link
+              <div
                 key={product._id}
-                href={`/product/${product._id}`}
-                className="block group"
+                className="border border-gray-700 rounded-lg p-4 hover:border-green-500 hover:shadow-lg transition-all duration-200 bg-gray-900 relative group"
               >
-                <div className="border border-gray-700 rounded-lg p-4 hover:border-green-500 hover:shadow-lg transition-all duration-200 bg-gray-900">
+                {/* Wishlist Button */}
+                <div className="absolute top-2 right-2 z-10">
+                  <WishlistButton
+                    productId={product._id}
+                    className="bg-gray-900/80 rounded-full p-1"
+                  />
+                </div>
+
+                <Link href={`/product/${product._id}`} className="block">
                   <div className="relative h-48 w-full mb-4 bg-gray-800 rounded-lg overflow-hidden">
                     <Image
                       src={getImageSrc(product.image)}
@@ -431,8 +439,8 @@ export default function HomeClient() {
                   <p className="text-xl font-bold text-green-500">
                     ₹{product.price.toLocaleString()}
                   </p>
-                </div>
-              </Link>
+                </Link>
+              </div>
             ))}
           </div>
         </>
