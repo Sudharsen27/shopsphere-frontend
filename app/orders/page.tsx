@@ -3,6 +3,7 @@
 import { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "../context/AuthContext";
+import Link from "next/link";
 
 type OrderItem = {
   name: string;
@@ -140,7 +141,12 @@ export default function OrdersPage() {
               className="border border-gray-700 p-4 rounded-lg bg-gray-900 hover:bg-gray-800 transition-colors"
             >
               <div className="flex justify-between items-start mb-3">
-                <p className="font-semibold text-lg">Order ID: {order._id.slice(-8)}</p>
+                <Link
+                  href={`/orders/${order._id}`}
+                  className="font-semibold text-lg hover:text-green-400 transition-colors cursor-pointer"
+                >
+                  Order ID: {order._id.slice(-8)}
+                </Link>
                 <p className="text-xs text-gray-400">
                   {new Date(order.createdAt).toLocaleString()}
                 </p>
@@ -157,7 +163,13 @@ export default function OrdersPage() {
                 ))}
               </div>
 
-              <div className="flex justify-end">
+              <div className="flex justify-between items-center">
+                <Link
+                  href={`/orders/${order._id}`}
+                  className="text-blue-400 hover:text-blue-300 text-sm underline"
+                >
+                  View Details →
+                </Link>
                 <p className="font-bold text-lg text-green-400">
                   Total: ₹{order.totalPrice.toLocaleString()}
                 </p>
