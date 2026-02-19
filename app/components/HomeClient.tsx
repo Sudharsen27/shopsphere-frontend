@@ -349,12 +349,12 @@ export default function HomeClient() {
      🛒 SHOP PAGE (LOGGED IN)
      ===================================================== */
   return (
-    <main className="p-4 sm:p-6 max-w-7xl mx-auto">
-      <div className="mb-6 sm:mb-8">
-        <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold mb-2">
+    <main className="p-6 max-w-7xl mx-auto">
+      <div className="mb-8">
+        <h1 className="text-4xl font-bold mb-2">
           Welcome to ShopSphere
         </h1>
-        <p className="text-sm sm:text-base text-gray-400">
+        <p className="text-gray-400">
           Discover amazing products at great prices
         </p>
       </div>
@@ -400,18 +400,18 @@ export default function HomeClient() {
             {filteredProducts.map((product) => (
               <div
                 key={product._id}
-                className="border border-gray-700 rounded-lg p-4 hover:border-green-500 hover:shadow-lg transition-all duration-200 bg-gray-900 relative group"
+                className="border border-gray-700 rounded-lg p-3 sm:p-4 hover:border-green-500 hover:shadow-lg transition-all duration-200 bg-gray-900 relative group"
               >
-                {/* Wishlist Button */}
+                {/* Wishlist Heart Button */}
                 <div className="absolute top-2 right-2 z-10">
                   <WishlistButton
                     productId={product._id}
-                    className="bg-gray-900/80 rounded-full p-1"
+                    className="bg-gray-900/80 backdrop-blur-sm rounded-full p-1.5 sm:p-2 hover:bg-gray-800 transition-colors"
                   />
                 </div>
 
                 <Link href={`/product/${product._id}`} className="block">
-                  <div className="relative h-48 w-full mb-4 bg-gray-800 rounded-lg overflow-hidden">
+                  <div className="relative h-40 sm:h-48 w-full mb-3 sm:mb-4 bg-gray-800 rounded-lg overflow-hidden">
                     <Image
                       src={getImageSrc(product.image)}
                       alt={product.name}
@@ -428,15 +428,15 @@ export default function HomeClient() {
                     />
                   </div>
 
-                  <h2 className="text-lg font-semibold mb-2 line-clamp-2 group-hover:text-green-400 transition-colors">
+                  <h2 className="text-base sm:text-lg font-semibold mb-2 line-clamp-2 group-hover:text-green-400 transition-colors">
                     {product.name}
                   </h2>
 
                   {product.brand && (
-                    <p className="text-sm text-gray-400 mb-1">{product.brand}</p>
+                    <p className="text-xs sm:text-sm text-gray-400 mb-1">{product.brand}</p>
                   )}
 
-                  <p className="text-xl font-bold text-green-500">
+                  <p className="text-lg sm:text-xl font-bold text-green-500">
                     ₹{product.price.toLocaleString()}
                   </p>
                 </Link>

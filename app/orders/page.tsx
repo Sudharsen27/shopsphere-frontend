@@ -3,7 +3,6 @@
 import { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "../context/AuthContext";
-import Link from "next/link";
 
 type OrderItem = {
   name: string;
@@ -110,14 +109,14 @@ export default function OrdersPage() {
   }
 
   return (
-    <div className="max-w-4xl mx-auto p-4 sm:p-6">
-      <h1 className="text-xl sm:text-2xl font-bold mb-4 sm:mb-6">My Orders</h1>
+    <div className="max-w-4xl mx-auto p-6">
+      <h1 className="text-2xl font-bold mb-6">My Orders</h1>
 
       {loading ? (
         <p className="text-center text-gray-400 py-10">Loading orders...</p>
       ) : error ? (
         <div className="text-center py-10">
-          <p className="text-red-400 mb-4 text-sm sm:text-base">{error}</p>
+          <p className="text-red-400 mb-4">{error}</p>
           <button
             onClick={() => {
               hasFetched.current = false;
@@ -126,27 +125,22 @@ export default function OrdersPage() {
               // Trigger re-fetch by updating a dependency
               window.location.reload();
             }}
-            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded text-white text-sm sm:text-base"
+            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded text-white"
           >
             Retry
           </button>
         </div>
       ) : orders.length === 0 ? (
-        <p className="text-center text-gray-400 py-10 text-sm sm:text-base">No orders found.</p>
+        <p className="text-center text-gray-400 py-10">No orders found.</p>
       ) : (
-        <div className="space-y-3 sm:space-y-4">
+        <div className="space-y-4">
           {orders.map((order) => (
             <div
               key={order._id}
-              className="border border-gray-700 p-3 sm:p-4 rounded-lg bg-gray-900 hover:bg-gray-800 transition-colors"
+              className="border border-gray-700 p-4 rounded-lg bg-gray-900 hover:bg-gray-800 transition-colors"
             >
-              <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-2 mb-3">
-                <Link
-                  href={`/orders/${order._id}`}
-                  className="font-semibold text-base sm:text-lg hover:text-green-400 transition-colors cursor-pointer"
-                >
-                  Order ID: {order._id.slice(-8)}
-                </Link>
+              <div className="flex justify-between items-start mb-3">
+                <p className="font-semibold text-lg">Order ID: {order._id.slice(-8)}</p>
                 <p className="text-xs text-gray-400">
                   {new Date(order.createdAt).toLocaleString()}
                 </p>
@@ -154,8 +148,8 @@ export default function OrdersPage() {
 
               <div className="space-y-2 mb-3">
                 {order.orderItems.map((item, idx) => (
-                  <div key={idx} className="flex justify-between text-xs sm:text-sm border-b border-gray-700 pb-2">
-                    <span className="flex-1 pr-2">
+                  <div key={idx} className="flex justify-between text-sm border-b border-gray-700 pb-2">
+                    <span>
                       {item.name} × {item.qty}
                     </span>
                     <span className="font-medium">₹{(item.price * item.qty).toLocaleString()}</span>
@@ -163,14 +157,8 @@ export default function OrdersPage() {
                 ))}
               </div>
 
-              <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 sm:gap-0">
-                <Link
-                  href={`/orders/${order._id}`}
-                  className="text-blue-400 hover:text-blue-300 text-xs sm:text-sm underline"
-                >
-                  View Details →
-                </Link>
-                <p className="font-bold text-base sm:text-lg text-green-400">
+              <div className="flex justify-end">
+                <p className="font-bold text-lg text-green-400">
                   Total: ₹{order.totalPrice.toLocaleString()}
                 </p>
               </div>

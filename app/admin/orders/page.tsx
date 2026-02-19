@@ -99,16 +99,16 @@ export default function AdminOrdersPage() {
 
   return (
     <ProtectedRoute requireAdmin={true}>
-      <div className="min-h-screen bg-black text-white p-6">
+      <div className="min-h-screen bg-black text-white p-4 sm:p-6">
         <div className="max-w-7xl mx-auto">
-          <div className="mb-8">
+          <div className="mb-6 sm:mb-8">
             <Link
               href="/admin"
-              className="text-gray-400 hover:text-white mb-2 inline-block"
+              className="text-xs sm:text-sm text-gray-400 hover:text-white mb-2 inline-block"
             >
               ← Back to Dashboard
             </Link>
-            <h1 className="text-4xl font-bold">Manage Orders</h1>
+            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold">Manage Orders</h1>
           </div>
 
           {loading ? (
@@ -121,21 +121,21 @@ export default function AdminOrdersPage() {
               <p className="text-gray-400">No orders found</p>
             </div>
           ) : (
-            <div className="space-y-4">
+            <div className="space-y-3 sm:space-y-4">
               {orders.map((order) => (
                 <div
                   key={order._id}
-                  className="bg-gray-900 border border-gray-800 rounded-lg p-6"
+                  className="bg-gray-900 border border-gray-800 rounded-lg p-4 sm:p-6"
                 >
-                  <div className="flex justify-between items-start mb-4">
+                  <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-3 sm:gap-0 mb-3 sm:mb-4">
                     <div>
-                      <div className="text-sm text-gray-400">Order ID</div>
-                      <div className="font-mono text-sm">{order._id}</div>
+                      <div className="text-xs sm:text-sm text-gray-400">Order ID</div>
+                      <div className="font-mono text-xs sm:text-sm break-all">{order._id}</div>
                     </div>
-                    <div className="text-right">
-                      <div className="text-sm text-gray-400">Customer</div>
-                      <div>{order.user?.name || "N/A"}</div>
-                      <div className="text-sm text-gray-400">
+                    <div className="text-left sm:text-right">
+                      <div className="text-xs sm:text-sm text-gray-400">Customer</div>
+                      <div className="text-sm sm:text-base">{order.user?.name || "N/A"}</div>
+                      <div className="text-xs sm:text-sm text-gray-400">
                         {order.user?.email || "N/A"}
                       </div>
                     </div>
@@ -168,35 +168,35 @@ export default function AdminOrdersPage() {
                     </div>
                   </div>
 
-                  <div className="flex justify-between items-center">
+                  <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 sm:gap-0">
                     <div>
-                      <div className="text-sm text-gray-400">Total</div>
-                      <div className="text-2xl font-bold">
+                      <div className="text-xs sm:text-sm text-gray-400">Total</div>
+                      <div className="text-xl sm:text-2xl font-bold">
                         ₹{order.totalPrice.toLocaleString()}
                       </div>
-                      <div className="text-sm text-gray-400 mt-1">
+                      <div className="text-xs sm:text-sm text-gray-400 mt-1">
                         {new Date(order.createdAt).toLocaleString()}
                       </div>
                     </div>
-                    <div className="flex gap-2">
+                    <div className="flex flex-wrap gap-2">
                       {order.isPaid ? (
-                        <span className="bg-green-600 px-3 py-1 rounded text-sm">
+                        <span className="bg-green-600 px-2 sm:px-3 py-1 rounded text-xs sm:text-sm">
                           Paid
                         </span>
                       ) : (
-                        <span className="bg-yellow-600 px-3 py-1 rounded text-sm">
+                        <span className="bg-yellow-600 px-2 sm:px-3 py-1 rounded text-xs sm:text-sm">
                           Unpaid
                         </span>
                       )}
                       {order.isDelivered ? (
-                        <span className="bg-green-600 px-3 py-1 rounded text-sm">
+                        <span className="bg-green-600 px-2 sm:px-3 py-1 rounded text-xs sm:text-sm">
                           Delivered
                         </span>
                       ) : (
                         <button
                           onClick={() => handleMarkDelivered(order._id)}
                           disabled={updatingId === order._id}
-                          className="bg-blue-600 hover:bg-blue-700 disabled:opacity-50 px-3 py-1 rounded text-sm"
+                          className="bg-blue-600 hover:bg-blue-700 disabled:opacity-50 px-2 sm:px-3 py-1 rounded text-xs sm:text-sm"
                         >
                           {updatingId === order._id
                             ? "Updating..."

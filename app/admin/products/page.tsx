@@ -82,21 +82,21 @@ export default function AdminProductsPage() {
 
   return (
     <ProtectedRoute requireAdmin={true}>
-      <div className="min-h-screen bg-black text-white p-6">
+      <div className="min-h-screen bg-black text-white p-4 sm:p-6">
         <div className="max-w-7xl mx-auto">
-          <div className="mb-8 flex items-center justify-between">
+          <div className="mb-6 sm:mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
               <Link
                 href="/admin"
-                className="text-gray-400 hover:text-white mb-2 inline-block"
+                className="text-xs sm:text-sm text-gray-400 hover:text-white mb-2 inline-block"
               >
                 ← Back to Dashboard
               </Link>
-              <h1 className="text-4xl font-bold">Manage Products</h1>
+              <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold">Manage Products</h1>
             </div>
             <Link
               href="/admin/products/new"
-              className="bg-green-600 hover:bg-green-700 px-6 py-3 rounded-lg font-semibold"
+              className="bg-green-600 hover:bg-green-700 px-4 sm:px-6 py-2 sm:py-3 rounded-lg font-semibold text-sm sm:text-base text-center"
             >
               + Add Product
             </Link>
@@ -122,13 +122,13 @@ export default function AdminProductsPage() {
               <table className="w-full border-collapse">
                 <thead>
                   <tr className="border-b border-gray-800">
-                    <th className="text-left p-4">Image</th>
-                    <th className="text-left p-4">Name</th>
-                    <th className="text-left p-4">Category</th>
-                    <th className="text-left p-4">Brand</th>
-                    <th className="text-left p-4">Price</th>
-                    <th className="text-left p-4">Stock</th>
-                    <th className="text-left p-4">Actions</th>
+                    <th className="text-left p-2 sm:p-4 text-xs sm:text-sm">Image</th>
+                    <th className="text-left p-2 sm:p-4 text-xs sm:text-sm">Name</th>
+                    <th className="text-left p-2 sm:p-4 text-xs sm:text-sm hidden sm:table-cell">Category</th>
+                    <th className="text-left p-2 sm:p-4 text-xs sm:text-sm hidden md:table-cell">Brand</th>
+                    <th className="text-left p-2 sm:p-4 text-xs sm:text-sm">Price</th>
+                    <th className="text-left p-2 sm:p-4 text-xs sm:text-sm hidden lg:table-cell">Stock</th>
+                    <th className="text-left p-2 sm:p-4 text-xs sm:text-sm">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -137,8 +137,8 @@ export default function AdminProductsPage() {
                       key={product._id}
                       className="border-b border-gray-800 hover:bg-gray-900"
                     >
-                      <td className="p-4">
-                        <div className="relative w-16 h-16">
+                      <td className="p-2 sm:p-4">
+                        <div className="relative w-12 h-12 sm:w-16 sm:h-16">
                           <Image
                             src={getImageSrc(product.image)}
                             alt={product.name}
@@ -154,28 +154,29 @@ export default function AdminProductsPage() {
                           />
                         </div>
                       </td>
-                      <td className="p-4">
-                        <div className="font-semibold">{product.name}</div>
-                        <div className="text-sm text-gray-400 line-clamp-1">
+                      <td className="p-2 sm:p-4">
+                        <div className="font-semibold text-xs sm:text-sm">{product.name}</div>
+                        <div className="text-xs sm:text-sm text-gray-400 line-clamp-1 hidden sm:block">
                           {product.description}
                         </div>
+                        <div className="text-xs text-gray-400 sm:hidden">{product.category}</div>
                       </td>
-                      <td className="p-4">{product.category}</td>
-                      <td className="p-4">{product.brand}</td>
-                      <td className="p-4">₹{product.price.toLocaleString()}</td>
-                      <td className="p-4">{product.countInStock}</td>
-                      <td className="p-4">
-                        <div className="flex gap-2">
+                      <td className="p-2 sm:p-4 hidden sm:table-cell text-xs sm:text-sm">{product.category}</td>
+                      <td className="p-2 sm:p-4 hidden md:table-cell text-xs sm:text-sm">{product.brand}</td>
+                      <td className="p-2 sm:p-4 text-xs sm:text-sm">₹{product.price.toLocaleString()}</td>
+                      <td className="p-2 sm:p-4 hidden lg:table-cell text-xs sm:text-sm">{product.countInStock}</td>
+                      <td className="p-2 sm:p-4">
+                        <div className="flex flex-col sm:flex-row gap-1 sm:gap-2">
                           <Link
                             href={`/admin/products/${product._id}/edit`}
-                            className="bg-blue-600 hover:bg-blue-700 px-3 py-1 rounded text-sm"
+                            className="bg-blue-600 hover:bg-blue-700 px-2 sm:px-3 py-1 rounded text-xs sm:text-sm text-center"
                           >
                             Edit
                           </Link>
                           <button
                             onClick={() => handleDelete(product._id)}
                             disabled={deletingId === product._id}
-                            className="bg-red-600 hover:bg-red-700 disabled:opacity-50 px-3 py-1 rounded text-sm"
+                            className="bg-red-600 hover:bg-red-700 disabled:opacity-50 px-2 sm:px-3 py-1 rounded text-xs sm:text-sm"
                           >
                             {deletingId === product._id ? "Deleting..." : "Delete"}
                           </button>

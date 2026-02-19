@@ -252,10 +252,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           // Verify token is still valid
           try {
             const verified = await authApi.verifyToken();
-            // Token is valid, use stored user info
+            // Token is valid, use stored user info (or verified user info if different)
             setUserInfo({
               ...parsedUser,
-              id: parsedUser.id || parsedUser._id,
+              ...(verified.user && {
+                id: verified.user.id || parsedUser.id || parsedUser._id,
+                name: verified.user.name || parsedUser.name,
+                email: verified.user.email || parsedUser.email,
+                role: verified.user.role || parsedUser.role,
+              }),
             });
           } catch (error) {
             // Handle rate limiting gracefully - don't clear session if it's just rate limit

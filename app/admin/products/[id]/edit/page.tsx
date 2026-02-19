@@ -105,7 +105,7 @@ export default function EditProductPage() {
   if (loading) {
     return (
       <ProtectedRoute requireAdmin={true}>
-        <div className="min-h-screen bg-black text-white p-6">
+        <div className="min-h-screen bg-black text-white p-4 sm:p-6">
           <div className="max-w-2xl mx-auto text-center py-20">
             <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-white"></div>
             <p className="mt-4 text-gray-400">Loading product...</p>
@@ -117,19 +117,19 @@ export default function EditProductPage() {
 
   return (
     <ProtectedRoute requireAdmin={true}>
-      <div className="min-h-screen bg-black text-white p-6">
+      <div className="min-h-screen bg-black text-white p-4 sm:p-6">
         <div className="max-w-2xl mx-auto">
           <Link
             href="/admin/products"
-            className="text-gray-400 hover:text-white mb-4 inline-block"
+            className="text-xs sm:text-sm text-gray-400 hover:text-white mb-3 sm:mb-4 inline-block"
           >
             ← Back to Products
           </Link>
-          <h1 className="text-4xl font-bold mb-8">Edit Product</h1>
+          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold mb-6 sm:mb-8">Edit Product</h1>
 
-          <form onSubmit={handleSubmit} className="space-y-6">
+          <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
             <div>
-              <label className="block text-sm font-medium mb-2">Product Name</label>
+              <label className="block text-xs sm:text-sm font-medium mb-2">Product Name</label>
               <input
                 type="text"
                 required
@@ -142,7 +142,7 @@ export default function EditProductPage() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium mb-2">
+              <label className="block text-xs sm:text-sm font-medium mb-2">
                 Description
               </label>
               <textarea
@@ -156,9 +156,9 @@ export default function EditProductPage() {
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium mb-2">Price (₹)</label>
+                <label className="block text-xs sm:text-sm font-medium mb-2">Price (₹)</label>
                 <input
                   type="number"
                   required
@@ -173,7 +173,7 @@ export default function EditProductPage() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium mb-2">Stock</label>
+                <label className="block text-xs sm:text-sm font-medium mb-2">Stock</label>
                 <input
                   type="number"
                   required
@@ -188,7 +188,7 @@ export default function EditProductPage() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium mb-2">Image URL</label>
+              <label className="block text-xs sm:text-sm font-medium mb-2">Image URL</label>
               <input
                 type="url"
                 required
@@ -215,7 +215,7 @@ export default function EditProductPage() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium mb-2">Brand</label>
+                <label className="block text-xs sm:text-sm font-medium mb-2">Brand</label>
                 <input
                   type="text"
                   required

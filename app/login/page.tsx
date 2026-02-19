@@ -83,11 +83,8 @@ export default function LoginPage() {
       router.replace("/");
     } catch (err) {
       if (err instanceof ApiError) {
-        // Handle rate limiting specifically
-        if (err.status === 429) {
-          setError("Too many login attempts. Please wait a few minutes before trying again.");
-        } else if (err.errors && err.errors.length > 0) {
-          // Handle validation errors from backend
+        // Handle validation errors from backend
+        if (err.errors && err.errors.length > 0) {
           const backendErrors: { email?: string; password?: string } = {};
           err.errors.forEach((error) => {
             if (error.field === "email") {
@@ -97,10 +94,8 @@ export default function LoginPage() {
             }
           });
           setFieldErrors(backendErrors);
-          setError(err.message);
-        } else {
-          setError(err.message);
         }
+        setError(err.message);
       } else {
         setError("An unexpected error occurred. Please try again.");
       }
@@ -122,14 +117,14 @@ export default function LoginPage() {
   }
 
   return (
-    <section className="min-h-[80vh] flex items-center px-4 sm:px-6 py-8 sm:py-12">
-      <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-8 sm:gap-12 items-center w-full">
+    <section className="min-h-[80vh] flex items-center px-6 py-12">
+      <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
         {/* LEFT SIDE – LOGIN FORM */}
-        <div className="max-w-md w-full mx-auto border border-gray-700 rounded-lg p-6 sm:p-8 bg-gray-900/50 backdrop-blur-sm">
-          <h1 className="text-2xl sm:text-3xl font-bold mb-2 text-center text-white">
+        <div className="max-w-md w-full mx-auto border border-gray-700 rounded-lg p-8 bg-gray-900/50 backdrop-blur-sm">
+          <h1 className="text-3xl font-bold mb-2 text-center text-white">
             Login to ShopSphere
           </h1>
-          <p className="text-center text-sm sm:text-base text-gray-400 mb-4 sm:mb-6">
+          <p className="text-center text-gray-400 mb-6">
             Welcome back! Please login to your account.
           </p>
 
@@ -287,16 +282,26 @@ export default function LoginPage() {
             </button>
           </form>
 
-          {/* Register Link */}
-          <p className="mt-6 text-sm text-center text-gray-400">
-            New to ShopSphere?{" "}
-            <Link
-              href="/register"
-              className="text-blue-500 hover:text-blue-400 font-medium transition"
-            >
-              Create an account
-            </Link>
-          </p>
+          {/* Register & Forgot Password Links */}
+          <div className="mt-6 space-y-2">
+            <p className="text-sm text-center text-gray-400">
+              New to ShopSphere?{" "}
+              <Link
+                href="/register"
+                className="text-blue-500 hover:text-blue-400 font-medium transition"
+              >
+                Create an account
+              </Link>
+            </p>
+            <p className="text-sm text-center">
+              <Link
+                href="/forgot-password"
+                className="text-gray-400 hover:text-gray-300 transition"
+              >
+                Forgot your password?
+              </Link>
+            </p>
+          </div>
         </div>
 
         {/* RIGHT SIDE – BRAND IMAGE */}

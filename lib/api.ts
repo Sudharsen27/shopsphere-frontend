@@ -47,19 +47,6 @@ async function fetchApi<T>(
 
   try {
     const response = await fetch(url, config);
-    
-    // Handle rate limiting (429) before trying to parse JSON
-    if (response.status === 429) {
-      let message = "Too many requests, please try again later";
-      try {
-        const data = await response.json();
-        message = data.message || message;
-      } catch {
-        // If JSON parsing fails, use default message
-      }
-      throw new ApiError(message, 429);
-    }
-
     const data = await response.json();
 
     if (!response.ok) {
@@ -164,6 +151,24 @@ export const authApi = {
     return fetchApi<{ message: string }>("/auth/password", {
       method: "PUT",
       body: JSON.stringify({ currentPassword, newPassword }),
+    });
+  },
+
+  forgotPassword: async (email: string) => {
+    return fetchApi<{
+      message: string;
+      resetToken?: string;
+      resetUrl?: string;
+    }>("/auth/forgot-password", {
+      method: "POST",
+      body: JSON.stringify({ email }),
+    });
+  },
+
+  resetPassword: async (token: string, password: string) => {
+    return fetchApi<{ message: string }>("/auth/reset-password", {
+      method: "POST",
+      body: JSON.stringify({ token, password }),
     });
   },
 };

@@ -55,18 +55,18 @@ export default function ProductFilter({
   };
 
   return (
-    <div className="bg-gray-900 border border-gray-700 rounded-lg p-4 sm:p-6 mb-4 sm:mb-6">
+    <div className="bg-gray-900 border border-gray-700 rounded-lg p-6 mb-6">
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-base sm:text-lg font-semibold">Filters</h3>
+        <h3 className="text-lg font-semibold">Filters</h3>
         <button
           onClick={clearFilters}
-          className="text-xs sm:text-sm text-gray-400 hover:text-white transition"
+          className="text-sm text-gray-400 hover:text-white transition"
         >
           Clear All
         </button>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3 sm:gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
         {/* Category Filter */}
         <div>
           <label className="block text-sm font-medium mb-2 text-gray-300">
