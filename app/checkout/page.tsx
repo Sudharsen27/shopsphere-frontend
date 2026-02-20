@@ -664,9 +664,16 @@
 import { useRouter } from "next/navigation";
 import { useCart } from "../context/CartContext";
 import { useAuth } from "../context/AuthContext";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
+const RAZORPAY_KEY_ID = process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || "";
+
+declare global {
+  interface Window {
+    Razorpay: any;
+  }
+}
 
 export default function CheckoutPage() {
   const router = useRouter();
@@ -677,12 +684,124 @@ export default function CheckoutPage() {
   const [city, setCity] = useState("");
   const [postalCode, setPostalCode] = useState("");
   const [country, setCountry] = useState("");
+  const [paymentMethod, setPaymentMethod] = useState<"COD" | "Online Payment">("COD");
   const [placing, setPlacing] = useState(false);
+  const [loadingRazorpay, setLoadingRazorpay] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  // Prevent hydration mismatch
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const total = cartItems.reduce(
     (sum, item) => sum + item.price * item.qty,
     0
   );
+
+  // Load Razorpay script
+  useEffect(() => {
+    if (paymentMethod === "Online Payment" && !window.Razorpay) {
+      setLoadingRazorpay(true);
+      const script = document.createElement("script");
+      script.src = "https://checkout.razorpay.com/v1/checkout.js";
+      script.onload = () => {
+        setLoadingRazorpay(false);
+      };
+      script.onerror = () => {
+        setLoadingRazorpay(false);
+        alert("Failed to load payment gateway. Please try again.");
+      };
+      document.body.appendChild(script);
+    }
+  }, [paymentMethod]);
+
+  const handleOnlinePayment = async (orderId: string) => {
+    if (!window.Razorpay) {
+      alert("Payment gateway not loaded. Please refresh and try again.");
+      return;
+    }
+
+    try {
+      // Create Razorpay order
+      const res = await fetch(`${API_BASE}/payments/create-order`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${userInfo?.token}`,
+        },
+        body: JSON.stringify({
+          orderId,
+          amount: total,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.message || "Failed to create payment order");
+      }
+
+      // Initialize Razorpay checkout
+      const options = {
+        key: data.keyId || RAZORPAY_KEY_ID,
+        amount: data.amount,
+        currency: data.currency,
+        name: "ShopSphere",
+        description: `Order #${orderId.slice(-8)}`,
+        order_id: data.orderId,
+        handler: async function (response: any) {
+          // Verify payment on backend
+          try {
+            const verifyRes = await fetch(`${API_BASE}/payments/verify`, {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${userInfo?.token}`,
+              },
+              body: JSON.stringify({
+                razorpay_order_id: response.razorpay_order_id,
+                razorpay_payment_id: response.razorpay_payment_id,
+                razorpay_signature: response.razorpay_signature,
+                orderId,
+              }),
+            });
+
+            const verifyData = await verifyRes.json();
+
+            if (verifyRes.ok && verifyData.success) {
+              clearCart();
+              router.push(`/payment/success?orderId=${orderId}`);
+            } else {
+              router.push(`/payment/failure?orderId=${orderId}&reason=${encodeURIComponent(verifyData.message || "Payment verification failed")}`);
+            }
+          } catch (error) {
+            console.error("Payment verification error:", error);
+            router.push(`/payment/failure?orderId=${orderId}&reason=${encodeURIComponent("Payment verification failed")}`);
+          }
+        },
+        prefill: {
+          name: userInfo?.name || "",
+          email: userInfo?.email || "",
+        },
+        theme: {
+          color: "#10b981", // Green color matching your theme
+        },
+        modal: {
+          ondismiss: function () {
+            // User closed the payment modal
+            router.push(`/payment/failure?orderId=${orderId}&reason=${encodeURIComponent("Payment cancelled by user")}`);
+          },
+        },
+      };
+
+      const razorpay = new window.Razorpay(options);
+      razorpay.open();
+    } catch (error) {
+      console.error("Payment error:", error);
+      alert(error instanceof Error ? error.message : "Payment failed. Please try again.");
+    }
+  };
 
   const placeOrder = async () => {
     if (!userInfo) {
@@ -724,7 +843,7 @@ export default function CheckoutPage() {
             postalCode: postalCode.trim(),
             country: country.trim(),
           },
-          paymentMethod: "COD",
+          paymentMethod: paymentMethod,
           itemsPrice: total,
           taxPrice: 0,
           shippingPrice: 0,
@@ -747,9 +866,18 @@ export default function CheckoutPage() {
         return;
       }
 
-      clearCart();
-      alert("Order placed successfully 🥳");
-      router.replace("/orders");
+      const orderId = data._id || data.id;
+
+      if (paymentMethod === "Online Payment") {
+        // Handle online payment
+        setPlacing(false);
+        await handleOnlinePayment(orderId);
+      } else {
+        // COD - order placed successfully
+        clearCart();
+        alert("Order placed successfully 🥳");
+        router.replace("/orders");
+      }
     } catch (error) {
       console.error("Order error:", error);
       alert("Order failed. Please try again.");
@@ -758,9 +886,39 @@ export default function CheckoutPage() {
     }
   };
 
+  // Show loading state until mounted to prevent hydration mismatch
+  if (!mounted) {
+    return (
+      <div className="max-w-4xl mx-auto p-6">
+        <h1 className="text-2xl font-bold mb-6">Checkout</h1>
+        <div className="flex items-center justify-center py-20">
+          <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-white"></div>
+        </div>
+      </div>
+    );
+  }
+
+  // Redirect if cart is empty
+  if (cartItems.length === 0) {
+    return (
+      <div className="max-w-4xl mx-auto p-6">
+        <h1 className="text-2xl font-bold mb-6">Checkout</h1>
+        <div className="text-center py-20">
+          <p className="text-gray-400 mb-4">Your cart is empty</p>
+          <button
+            onClick={() => router.push("/")}
+            className="px-6 py-3 bg-green-600 hover:bg-green-700 rounded-lg text-white font-medium"
+          >
+            Continue Shopping
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="max-w-4xl mx-auto p-6">
-      <h1 className="text-2xl font-bold mb-6">Checkout</h1>
+    <div className="max-w-4xl mx-auto p-4 sm:p-6">
+      <h1 className="text-2xl sm:text-3xl font-bold mb-6 sm:mb-8">Checkout</h1>
 
       {/* 🏠 SHIPPING ADDRESS */}
       <div className="mb-8 space-y-4">
@@ -799,32 +957,76 @@ export default function CheckoutPage() {
         />
       </div>
 
-      {/* 🛒 ORDER SUMMARY */}
-      <div className="mb-6">
-        {cartItems.map((item) => (
-          <div
-            key={item._id}
-            className="flex justify-between py-3 border-b"
-          >
-            <span>
-              {item.name} × {item.qty}
-            </span>
-            <span>₹{item.price * item.qty}</span>
-          </div>
-        ))}
+      {/* 💳 PAYMENT METHOD */}
+      <div className="mb-8">
+        <h2 className="text-lg sm:text-xl font-semibold mb-4">Payment Method</h2>
+        <div className="space-y-3">
+          <label className="flex items-center p-4 border border-gray-700 rounded-lg bg-gray-900 cursor-pointer hover:border-green-500 transition-colors">
+            <input
+              type="radio"
+              name="paymentMethod"
+              value="COD"
+              checked={paymentMethod === "COD"}
+              onChange={(e) => setPaymentMethod(e.target.value as "COD" | "Online Payment")}
+              className="w-4 h-4 text-green-600 focus:ring-green-500"
+            />
+            <div className="ml-3 flex-1">
+              <span className="font-medium text-white">Cash on Delivery (COD)</span>
+              <p className="text-sm text-gray-400">Pay when you receive the order</p>
+            </div>
+          </label>
+
+          <label className="flex items-center p-4 border border-gray-700 rounded-lg bg-gray-900 cursor-pointer hover:border-green-500 transition-colors">
+            <input
+              type="radio"
+              name="paymentMethod"
+              value="Online Payment"
+              checked={paymentMethod === "Online Payment"}
+              onChange={(e) => setPaymentMethod(e.target.value as "COD" | "Online Payment")}
+              className="w-4 h-4 text-green-600 focus:ring-green-500"
+            />
+            <div className="ml-3 flex-1">
+              <span className="font-medium text-white">Online Payment</span>
+              <p className="text-sm text-gray-400">Pay securely with Razorpay (Cards, UPI, Net Banking)</p>
+            </div>
+          </label>
+        </div>
       </div>
 
-      <div className="flex justify-between font-bold text-lg mb-6">
-        <span>Total</span>
-        <span>₹{total}</span>
+      {/* 🛒 ORDER SUMMARY */}
+      <div className="mb-6 border border-gray-700 rounded-lg p-4 sm:p-6 bg-gray-900/50">
+        <h2 className="text-lg sm:text-xl font-semibold mb-4">Order Summary</h2>
+        <div className="space-y-2 mb-4">
+          {cartItems.map((item, index) => (
+            <div
+              key={`${item._id}-${index}`}
+              className="flex justify-between py-2 sm:py-3 border-b border-gray-700/50 text-sm sm:text-base"
+            >
+              <span className="text-gray-300">
+                {item.name} × {item.qty}
+              </span>
+              <span className="font-medium text-white">₹{(item.price * item.qty).toLocaleString()}</span>
+            </div>
+          ))}
+        </div>
+        <div className="flex justify-between font-bold text-lg sm:text-xl pt-4 border-t border-gray-700">
+          <span className="text-white">Total</span>
+          <span className="text-green-400">₹{total.toLocaleString()}</span>
+        </div>
       </div>
 
       <button
         onClick={placeOrder}
-        disabled={placing}
-        className="w-full bg-green-600 hover:bg-green-700 disabled:opacity-70 disabled:cursor-not-allowed transition py-3 rounded-md font-medium text-white"
+        disabled={placing || (paymentMethod === "Online Payment" && loadingRazorpay)}
+        className="w-full bg-green-600 hover:bg-green-700 disabled:opacity-70 disabled:cursor-not-allowed transition py-3 sm:py-4 rounded-lg font-medium text-white text-base sm:text-lg"
       >
-        {placing ? "Placing order..." : "Place Order"}
+        {placing
+          ? "Placing order..."
+          : paymentMethod === "Online Payment" && loadingRazorpay
+          ? "Loading payment gateway..."
+          : paymentMethod === "Online Payment"
+          ? "Proceed to Payment"
+          : "Place Order"}
       </button>
     </div>
   );
