@@ -1,10 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
 
-export default function PaymentSuccessPage() {
+function PaymentSuccessContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const [mounted, setMounted] = useState(false);
@@ -96,5 +96,23 @@ export default function PaymentSuccessPage() {
         </p>
       </div>
     </div>
+  );
+}
+
+export default function PaymentSuccessPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center p-4">
+        <div className="max-w-md w-full text-center">
+          <div className="animate-pulse">
+            <div className="w-20 h-20 mx-auto bg-gray-700 rounded-full mb-4"></div>
+            <div className="h-8 bg-gray-700 rounded w-3/4 mx-auto mb-2"></div>
+            <div className="h-4 bg-gray-700 rounded w-1/2 mx-auto"></div>
+          </div>
+        </div>
+      </div>
+    }>
+      <PaymentSuccessContent />
+    </Suspense>
   );
 }
