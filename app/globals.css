@@ -24,3 +24,17 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+@keyframes offer-glow {
+  0%, 100% {
+    box-shadow: 0 0 20px -2px rgba(16, 185, 129, 0.25), 0 0 0 1px rgba(16, 185, 129, 0.15);
+    opacity: 1;
+  }
+  50% {
+    box-shadow: 0 0 28px 0 rgba(16, 185, 129, 0.4), 0 0 0 1px rgba(16, 185, 129, 0.25);
+    opacity: 1;
+  }
+}
+.animate-offer-glow {
+  animation: offer-glow 2.5s ease-in-out infinite;
+}

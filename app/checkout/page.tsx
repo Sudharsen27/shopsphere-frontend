@@ -675,6 +675,31 @@ declare global {
   }
 }
 
+type Offer = { code: string; description: string };
+
+function CheckoutOffers({ API_BASE }: { API_BASE: string }) {
+  const [offers, setOffers] = useState<Offer[]>([]);
+  useEffect(() => {
+    fetch(`${API_BASE}/coupons/offers`)
+      .then((r) => r.json())
+      .then((data) => setOffers(Array.isArray(data) ? data : []))
+      .catch(() => {});
+  }, [API_BASE]);
+  if (offers.length === 0) return null;
+  return (
+    <div className="mt-3 pt-3 border-t border-gray-700/50">
+      <p className="text-xs text-gray-400 mb-1">Current offers:</p>
+      <ul className="text-xs text-gray-300 space-y-0.5">
+        {offers.map((o) => (
+          <li key={o.code}>
+            <span className="font-mono font-semibold text-green-400">{o.code}</span> — {o.description}
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
 export default function CheckoutPage() {
   const router = useRouter();
   const { cartItems, clearCart } = useCart();
@@ -688,16 +713,50 @@ export default function CheckoutPage() {
   const [placing, setPlacing] = useState(false);
   const [loadingRazorpay, setLoadingRazorpay] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const [couponInput, setCouponInput] = useState("");
+  const [applyingCoupon, setApplyingCoupon] = useState(false);
+  const [appliedCoupon, setAppliedCoupon] = useState<{ code: string; discountAmount: number } | null>(null);
+  const [couponError, setCouponError] = useState("");
 
-  // Prevent hydration mismatch
   useEffect(() => {
     setMounted(true);
   }, []);
 
-  const total = cartItems.reduce(
-    (sum, item) => sum + item.price * item.qty,
-    0
-  );
+  const subtotal = cartItems.reduce((sum, item) => sum + item.price * item.qty, 0);
+  const discountAmount = appliedCoupon?.discountAmount ?? 0;
+  const total = Math.max(0, subtotal - discountAmount);
+
+  const applyCoupon = async () => {
+    const code = couponInput.trim();
+    if (!code) return;
+    setApplyingCoupon(true);
+    setCouponError("");
+    try {
+      const res = await fetch(`${API_BASE}/coupons/validate`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code, subtotal }),
+      });
+      const data = await res.json();
+      if (data.valid) {
+        setAppliedCoupon({ code: data.couponCode, discountAmount: data.discountAmount });
+      } else {
+        setCouponError(data.message || "Invalid coupon");
+        setAppliedCoupon(null);
+      }
+    } catch {
+      setCouponError("Could not validate coupon");
+      setAppliedCoupon(null);
+    } finally {
+      setApplyingCoupon(false);
+    }
+  };
+
+  const removeCoupon = () => {
+    setAppliedCoupon(null);
+    setCouponInput("");
+    setCouponError("");
+  };
 
   // Load Razorpay script
   useEffect(() => {
@@ -844,10 +903,11 @@ export default function CheckoutPage() {
             country: country.trim(),
           },
           paymentMethod: paymentMethod,
-          itemsPrice: total,
+          itemsPrice: subtotal,
           taxPrice: 0,
           shippingPrice: 0,
           totalPrice: total,
+          ...(appliedCoupon && { couponCode: appliedCoupon.code }),
         }),
       });
 
@@ -1009,6 +1069,48 @@ export default function CheckoutPage() {
             </div>
           ))}
         </div>
+        <div className="py-3 border-b border-gray-700/50">
+          <p className="text-xs text-gray-400 mb-2">
+            Have a coupon? Type the code below (e.g. SAVE10, FLAT100) and click Apply.
+          </p>
+          <div className="flex flex-wrap gap-2 items-center">
+            <input
+              type="text"
+              placeholder="Enter coupon code"
+              className="flex-1 min-w-[120px] p-2 border border-gray-600 rounded bg-black text-white text-sm"
+              value={couponInput}
+              onChange={(e) => { setCouponInput(e.target.value); setCouponError(""); }}
+              disabled={!!appliedCoupon}
+            />
+            {appliedCoupon ? (
+              <span className="text-green-400 text-sm font-medium">
+                {appliedCoupon.code} (−₹{appliedCoupon.discountAmount.toLocaleString()})
+              </span>
+            ) : null}
+            {appliedCoupon ? (
+              <button type="button" onClick={removeCoupon} className="text-red-400 text-sm hover:underline">
+                Remove
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={applyCoupon}
+                disabled={applyingCoupon || !couponInput.trim()}
+                className="px-3 py-2 bg-gray-700 hover:bg-gray-600 rounded text-sm font-medium disabled:opacity-50"
+              >
+                {applyingCoupon ? "Applying..." : "Apply"}
+              </button>
+            )}
+          </div>
+          {couponError ? <p className="text-red-400 text-xs mt-1">{couponError}</p> : null}
+          <CheckoutOffers API_BASE={API_BASE} />
+        </div>
+        {discountAmount > 0 && (
+          <div className="flex justify-between py-2 text-green-400">
+            <span>Discount</span>
+            <span>−₹{discountAmount.toLocaleString()}</span>
+          </div>
+        )}
         <div className="flex justify-between font-bold text-lg sm:text-xl pt-4 border-t border-gray-700">
           <span className="text-white">Total</span>
           <span className="text-green-400">₹{total.toLocaleString()}</span>

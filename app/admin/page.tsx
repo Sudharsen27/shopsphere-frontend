@@ -125,6 +125,16 @@ export default function AdminDashboard() {
                     View all orders and update their status
                   </p>
                 </Link>
+
+                <Link
+                  href="/admin/coupons"
+                  className="bg-gray-900 border border-gray-800 rounded-lg p-4 sm:p-6 hover:border-amber-500 transition-colors"
+                >
+                  <h2 className="text-xl sm:text-2xl font-bold mb-2">Coupons</h2>
+                  <p className="text-sm sm:text-base text-gray-400">
+                    Create and manage discount codes
+                  </p>
+                </Link>
               </div>
             </>
           ) : (

@@ -125,6 +125,7 @@ import Link from "next/link";
 import SearchBar from "./SearchBar";
 import ProductFilter from "./ProductFilter";
 import WishlistButton from "./WishlistButton";
+import { useAuth } from "../context/AuthContext";
 
 type Product = {
   _id: string;
@@ -154,8 +155,11 @@ function getImageSrc(image?: string) {
   return image;
 }
 
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
+
 export default function HomeClient() {
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const { userInfo, loading: authLoading } = useAuth();
+  const isLoggedIn = !!userInfo;
   const [products, setProducts] = useState<Product[]>([]);
   const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
@@ -170,9 +174,11 @@ export default function HomeClient() {
   });
   const [categories, setCategories] = useState<string[]>([]);
   const [brands, setBrands] = useState<string[]>([]);
+  const [offers, setOffers] = useState<{ code: string; description: string }[]>([]);
   const isFetchingRef = useRef(false);
   const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
   const hasInitialFetchRef = useRef(false);
+  const [hasFetchedOnce, setHasFetchedOnce] = useState(false);
   const filtersRef = useRef(filters);
   const searchQueryRef = useRef(searchQuery);
 
@@ -182,16 +188,10 @@ export default function HomeClient() {
     searchQueryRef.current = searchQuery;
   }, [filters, searchQuery]);
 
-  // Initialize login state
+  // When not logged in, stop loading so we show the landing page
   useEffect(() => {
-    const userInfo = localStorage.getItem("userInfo");
-    const loggedIn = !!userInfo;
-    setIsLoggedIn(loggedIn);
-
-    if (!loggedIn) {
-      setLoading(false);
-    }
-  }, []);
+    if (!isLoggedIn) setLoading(false);
+  }, [isLoggedIn]);
 
   // Fetch products function - uses refs to avoid dependency issues
   const fetchProducts = useCallback(async () => {
@@ -219,7 +219,7 @@ export default function HomeClient() {
       params.append("order", currentFilters.order);
 
       const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/products?${params.toString()}`
+        `${API_BASE}/products?${params.toString()}`
       );
       
       if (!res.ok) {
@@ -249,16 +249,32 @@ export default function HomeClient() {
     } finally {
       setLoading(false);
       isFetchingRef.current = false;
+      setHasFetchedOnce(true); // so we don't show "No products found" before first fetch
     }
   }, []); // No dependencies - uses refs instead
 
-  // Fetch on initial login (only once)
+  // Fetch products when user is logged in (once per "session" on this page)
   useEffect(() => {
-    if (isLoggedIn && !hasInitialFetchRef.current && !isFetchingRef.current) {
+    if (!isLoggedIn) {
+      hasInitialFetchRef.current = false;
+      setHasFetchedOnce(false);
+      return;
+    }
+    if (!hasInitialFetchRef.current && !isFetchingRef.current) {
       hasInitialFetchRef.current = true;
+      setLoading(true);
       fetchProducts();
     }
   }, [isLoggedIn, fetchProducts]);
+
+  // Fetch current coupon offers for visibility
+  useEffect(() => {
+    if (!isLoggedIn) return;
+    fetch(`${API_BASE}/coupons/offers`)
+      .then((r) => r.json())
+      .then((data) => setOffers(Array.isArray(data) ? data : []))
+      .catch(() => {});
+  }, [isLoggedIn]);
 
   // Debounced fetch when filters/search change (only if already logged in)
   useEffect(() => {
@@ -291,6 +307,18 @@ export default function HomeClient() {
   const handleFilterChange = (newFilters: FilterOptions) => {
     setFilters(newFilters);
   };
+
+  /* =====================================================
+     ⏳ AUTH STILL LOADING (avoid wrong view / "No products" flash)
+     ===================================================== */
+  if (authLoading) {
+    return (
+      <div className="min-h-[60vh] flex items-center justify-center">
+        <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-green-500"></div>
+        <p className="ml-4 text-gray-400">Loading...</p>
+      </div>
+    );
+  }
 
   /* =====================================================
      🔐 LANDING PAGE (LOGGED OUT – PROFESSIONAL UI)
@@ -349,7 +377,36 @@ export default function HomeClient() {
      🛒 SHOP PAGE (LOGGED IN)
      ===================================================== */
   return (
-    <main className="p-6 max-w-7xl mx-auto">
+    <main className="p-6 max-w-7xl mx-auto relative">
+      {/* Floating coupon strip – right side, all offers, glass + glow */}
+      {offers.length > 0 && (
+        <div className="fixed right-0 top-1/2 -translate-y-1/2 z-30 hidden lg:block">
+          <Link
+            href="/checkout"
+            className="group block py-4 pl-4 pr-3 rounded-l-2xl border border-r-0 border-green-400/20 bg-gray-900/90 backdrop-blur-xl shadow-xl transition-all duration-300 hover:bg-gray-800/95 hover:border-green-400/40 animate-offer-glow hover:animate-none"
+          >
+            <span className="text-[10px] uppercase tracking-[0.2em] text-gray-500 font-medium block text-center mb-2">
+              {offers.length > 1 ? `${offers.length} offers` : "Offer"}
+            </span>
+            <div className="space-y-2">
+              {offers.map((o) => (
+                <div key={o.code} className="flex flex-col items-center">
+                  <span className="font-mono text-sm font-bold text-green-400 group-hover:text-green-300 transition-colors">
+                    {o.code}
+                  </span>
+                  <span className="text-[9px] text-gray-500 max-w-[78px] text-center leading-tight mt-0.5">
+                    {o.description}
+                  </span>
+                </div>
+              ))}
+            </div>
+            <span className="mt-3 block text-center text-[10px] font-medium text-green-400/90 group-hover:text-green-400 transition-colors">
+              Use at checkout →
+            </span>
+          </Link>
+        </div>
+      )}
+
       <div className="mb-8">
         <h1 className="text-4xl font-bold mb-2">
           Welcome to ShopSphere
@@ -373,8 +430,8 @@ export default function HomeClient() {
         />
       )}
 
-      {/* Products Grid */}
-      {loading ? (
+      {/* Products Grid – show loading until first fetch completes (fixes "No products" flash after login) */}
+      {loading || (isLoggedIn && !hasFetchedOnce) ? (
         <div className="text-center py-20">
           <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-white"></div>
           <p className="mt-4 text-gray-400">Loading products...</p>
