@@ -129,6 +129,14 @@ export const authApi = {
         name: string;
         email: string;
         role: string;
+        addresses?: Array<{
+          _id: string;
+          address: string;
+          city: string;
+          postalCode: string;
+          country: string;
+          isDefault?: boolean;
+        }>;
       };
     }>("/auth/profile");
   },
@@ -171,7 +179,40 @@ export const authApi = {
       body: JSON.stringify({ token, password }),
     });
   },
+
+  // Saved addresses
+  addAddress: (address: string, city: string, postalCode: string, country: string, isDefault?: boolean) =>
+    fetchApi<{ address: any; addresses: any[] }>("/auth/addresses", {
+      method: "POST",
+      body: JSON.stringify({ address, city, postalCode, country, isDefault }),
+    }),
+  updateAddress: (id: string, data: { address?: string; city?: string; postalCode?: string; country?: string; isDefault?: boolean }) =>
+    fetchApi<{ addresses: any[] }>(`/auth/addresses/${id}`, {
+      method: "PUT",
+      body: JSON.stringify(data),
+    }),
+  deleteAddress: (id: string) =>
+    fetchApi<{ addresses: any[] }>(`/auth/addresses/${id}`, { method: "DELETE" }),
+  setDefaultAddress: (id: string) =>
+    fetchApi<{ addresses: any[] }>(`/auth/addresses/${id}/default`, { method: "PATCH" }),
 };
+
+// Admin stats
+export async function getAdminStats() {
+  return fetchApi<{
+    totalOrders: number;
+    totalRevenue: number;
+    revenueToday: number;
+    revenueThisMonth: number;
+    ordersToday: number;
+    ordersThisMonth: number;
+    totalUsers: number;
+    lowStockCount: number;
+    lowStockProducts: Array<{ _id: string; name: string; countInStock: number; price: number }>;
+    recentOrders: any[];
+    topProducts: Array<{ name: string; totalQty: number; totalRevenue: number; productId: string }>;
+  }>("/admin/stats");
+}
 
 // Products API
 export async function fetchProducts() {

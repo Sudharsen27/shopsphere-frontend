@@ -665,8 +665,11 @@ import { useRouter } from "next/navigation";
 import { useCart } from "../context/CartContext";
 import { useAuth } from "../context/AuthContext";
 import { useState, useEffect } from "react";
+import { authApi } from "@/lib/api";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
+
+type SavedAddress = { _id: string; address: string; city: string; postalCode: string; country: string; isDefault?: boolean };
 const RAZORPAY_KEY_ID = process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || "";
 
 declare global {
@@ -709,6 +712,9 @@ export default function CheckoutPage() {
   const [city, setCity] = useState("");
   const [postalCode, setPostalCode] = useState("");
   const [country, setCountry] = useState("");
+  const [savedAddresses, setSavedAddresses] = useState<SavedAddress[]>([]);
+  const [selectedAddressId, setSelectedAddressId] = useState<string | null>(null);
+  const [useNewAddress, setUseNewAddress] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState<"COD" | "Online Payment">("COD");
   const [placing, setPlacing] = useState(false);
   const [loadingRazorpay, setLoadingRazorpay] = useState(false);
@@ -721,6 +727,23 @@ export default function CheckoutPage() {
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  // Load saved addresses when user is logged in
+  useEffect(() => {
+    if (!userInfo) return;
+    authApi.getProfile().then((res: any) => {
+      const list = res?.user?.addresses || [];
+      setSavedAddresses(Array.isArray(list) ? list : []);
+      const defaultAddr = list?.find((a: SavedAddress) => a.isDefault) || list?.[0];
+      if (defaultAddr && !useNewAddress) {
+        setSelectedAddressId(defaultAddr._id);
+        setAddress(defaultAddr.address);
+        setCity(defaultAddr.city);
+        setPostalCode(defaultAddr.postalCode);
+        setCountry(defaultAddr.country);
+      }
+    }).catch(() => {});
+  }, [userInfo]);
 
   const subtotal = cartItems.reduce((sum, item) => sum + item.price * item.qty, 0);
   const discountAmount = appliedCoupon?.discountAmount ?? 0;
@@ -984,37 +1007,98 @@ export default function CheckoutPage() {
       <div className="mb-8 space-y-4">
         <h2 className="text-lg font-semibold">Shipping Address</h2>
 
-        <input
-          type="text"
-          placeholder="Address"
-          className="w-full p-3 border rounded bg-black text-white"
-          value={address}
-          onChange={(e) => setAddress(e.target.value)}
-        />
+        {savedAddresses.length > 0 && !useNewAddress && (
+          <div className="space-y-2">
+            <p className="text-sm text-gray-400">Choose a saved address or add a new one</p>
+            <div className="space-y-2 max-h-48 overflow-y-auto">
+              {savedAddresses.map((addr) => (
+                <label
+                  key={addr._id}
+                  className={`flex items-start gap-3 p-3 border rounded-lg cursor-pointer transition ${
+                    selectedAddressId === addr._id ? "border-green-500 bg-green-500/10" : "border-gray-700 hover:border-gray-600"
+                  }`}
+                >
+                  <input
+                    type="radio"
+                    name="savedAddress"
+                    checked={selectedAddressId === addr._id}
+                    onChange={() => {
+                      setSelectedAddressId(addr._id);
+                      setAddress(addr.address);
+                      setCity(addr.city);
+                      setPostalCode(addr.postalCode);
+                      setCountry(addr.country);
+                    }}
+                    className="mt-1 w-4 h-4 text-green-600"
+                  />
+                  <div>
+                    <span className="text-white">{addr.address}, {addr.city} {addr.postalCode}, {addr.country}</span>
+                    {addr.isDefault && <span className="ml-2 text-xs text-green-400">Default</span>}
+                  </div>
+                </label>
+              ))}
+            </div>
+            <button
+              type="button"
+              onClick={() => { setUseNewAddress(true); setSelectedAddressId(null); setAddress(""); setCity(""); setPostalCode(""); setCountry(""); }}
+              className="text-sm text-green-400 hover:underline"
+            >
+              + Add new address
+            </button>
+          </div>
+        )}
 
-        <input
-          type="text"
-          placeholder="City"
-          className="w-full p-3 border rounded bg-black text-white"
-          value={city}
-          onChange={(e) => setCity(e.target.value)}
-        />
-
-        <input
-          type="text"
-          placeholder="Postal Code"
-          className="w-full p-3 border rounded bg-black text-white"
-          value={postalCode}
-          onChange={(e) => setPostalCode(e.target.value)}
-        />
-
-        <input
-          type="text"
-          placeholder="Country"
-          className="w-full p-3 border rounded bg-black text-white"
-          value={country}
-          onChange={(e) => setCountry(e.target.value)}
-        />
+        {(useNewAddress || savedAddresses.length === 0) && (
+          <>
+            {savedAddresses.length > 0 && (
+            <button
+              type="button"
+              onClick={() => {
+                setUseNewAddress(false);
+                const addr = savedAddresses.find((a) => a._id === selectedAddressId) || savedAddresses[0];
+                if (addr) {
+                  setSelectedAddressId(addr._id);
+                  setAddress(addr.address);
+                  setCity(addr.city);
+                  setPostalCode(addr.postalCode);
+                  setCountry(addr.country);
+                }
+              }}
+              className="text-sm text-gray-400 hover:underline mb-2"
+            >
+              ← Choose saved address
+            </button>
+            )}
+            <input
+              type="text"
+              placeholder="Address"
+              className="w-full p-3 border rounded bg-black text-white border-gray-700"
+              value={address}
+              onChange={(e) => setAddress(e.target.value)}
+            />
+            <input
+              type="text"
+              placeholder="City"
+              className="w-full p-3 border rounded bg-black text-white border-gray-700"
+              value={city}
+              onChange={(e) => setCity(e.target.value)}
+            />
+            <input
+              type="text"
+              placeholder="Postal Code"
+              className="w-full p-3 border rounded bg-black text-white border-gray-700"
+              value={postalCode}
+              onChange={(e) => setPostalCode(e.target.value)}
+            />
+            <input
+              type="text"
+              placeholder="Country"
+              className="w-full p-3 border rounded bg-black text-white border-gray-700"
+              value={country}
+              onChange={(e) => setCountry(e.target.value)}
+            />
+          </>
+        )}
       </div>
 
       {/* 💳 PAYMENT METHOD */}
