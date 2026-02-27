@@ -315,6 +315,12 @@ export default function OrderDetailsPage() {
             </p>
           </div>
           <div className="flex items-center gap-3 flex-wrap">
+            <Link
+              href={`/track?order=${order._id}&email=${encodeURIComponent(userInfo?.email ?? "")}`}
+              className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg bg-green-600 hover:bg-green-700 text-white transition-colors"
+            >
+              Track this order
+            </Link>
             {canCancel && (
               <button
                 type="button"

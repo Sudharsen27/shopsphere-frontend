@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
 import { useAuth } from "../context/AuthContext";
+import { useWishlist } from "../context/WishlistContext";
 import WishlistButton from "../components/WishlistButton";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
@@ -27,6 +28,7 @@ function getImageSrc(image?: string) {
 
 export default function WishlistPage() {
   const { userInfo } = useAuth();
+  const wishlistContext = useWishlist();
   const router = useRouter();
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
@@ -79,8 +81,8 @@ export default function WishlistPage() {
       });
 
       if (res.ok) {
-        // Remove product from local state
         setProducts((prev) => prev.filter((p) => p._id !== productId));
+        wishlistContext?.removeFromWishlist(productId);
       }
     } catch (err) {
       console.error("Remove from wishlist error:", err);

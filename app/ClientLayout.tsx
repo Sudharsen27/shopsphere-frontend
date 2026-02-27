@@ -1,6 +1,7 @@
 "use client";
 
 import { CartProvider } from "./context/CartContext";
+import { WishlistProvider } from "./context/WishlistContext";
 import Navbar from "./components/Navbar";
 
 export default function ClientLayout({
@@ -10,8 +11,10 @@ export default function ClientLayout({
 }) {
   return (
     <CartProvider>
-      <Navbar />
-      {children}
+      <WishlistProvider>
+        <Navbar />
+        {children}
+      </WishlistProvider>
     </CartProvider>
   );
 }

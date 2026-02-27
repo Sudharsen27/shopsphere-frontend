@@ -1,8 +1,9 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "../context/AuthContext";
+import { useWishlist } from "../context/WishlistContext";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
 
@@ -14,38 +15,12 @@ interface WishlistButtonProps {
 export default function WishlistButton({ productId, className = "" }: WishlistButtonProps) {
   const { userInfo } = useAuth();
   const router = useRouter();
-  const [isInWishlist, setIsInWishlist] = useState(false);
+  const wishlist = useWishlist();
   const [loading, setLoading] = useState(false);
-  const [checking, setChecking] = useState(true);
 
-  // Check if product is in wishlist
-  useEffect(() => {
-    const checkWishlist = async () => {
-      if (!userInfo) {
-        setChecking(false);
-        return;
-      }
-
-      try {
-        const res = await fetch(`${API_BASE}/wishlist/check/${productId}`, {
-          headers: {
-            Authorization: `Bearer ${userInfo.token}`,
-          },
-        });
-
-        if (res.ok) {
-          const data = await res.json();
-          setIsInWishlist(data.isInWishlist || false);
-        }
-      } catch (error) {
-        console.error("Failed to check wishlist:", error);
-      } finally {
-        setChecking(false);
-      }
-    };
-
-    checkWishlist();
-  }, [productId, userInfo]);
+  // Use context when available (one API call for whole page); otherwise we'd need per-product check
+  const isInWishlist = wishlist ? wishlist.isInWishlist(productId) : false;
+  const checking = wishlist ? wishlist.loading : false;
 
   const handleToggle = async (e: React.MouseEvent) => {
     e.preventDefault();
@@ -59,29 +34,17 @@ export default function WishlistButton({ productId, className = "" }: WishlistBu
     setLoading(true);
     try {
       if (isInWishlist) {
-        // Remove from wishlist
         const res = await fetch(`${API_BASE}/wishlist/${productId}`, {
           method: "DELETE",
-          headers: {
-            Authorization: `Bearer ${userInfo.token}`,
-          },
+          headers: { Authorization: `Bearer ${userInfo.token}` },
         });
-
-        if (res.ok) {
-          setIsInWishlist(false);
-        }
+        if (res.ok && wishlist) wishlist.removeFromWishlist(productId);
       } else {
-        // Add to wishlist
         const res = await fetch(`${API_BASE}/wishlist/${productId}`, {
           method: "POST",
-          headers: {
-            Authorization: `Bearer ${userInfo.token}`,
-          },
+          headers: { Authorization: `Bearer ${userInfo.token}` },
         });
-
-        if (res.ok) {
-          setIsInWishlist(true);
-        }
+        if (res.ok && wishlist) wishlist.addToWishlist(productId);
       }
     } catch (error) {
       console.error("Failed to toggle wishlist:", error);
@@ -90,7 +53,6 @@ export default function WishlistButton({ productId, className = "" }: WishlistBu
     }
   };
 
-  // Don't show button while checking (prevents flicker)
   if (checking) {
     return (
       <button
