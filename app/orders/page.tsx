@@ -82,10 +82,38 @@ export default function OrdersPage() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [cancellingId, setCancellingId] = useState<string | null>(null);
   const router = useRouter();
   const { userInfo, loading: authLoading } = useAuth();
   const hasFetched = useRef(false);
   const isRedirecting = useRef(false);
+
+  const handleCancelOrder = async (e: React.MouseEvent, orderId: string) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!userInfo?.token || cancellingId) return;
+    if (!confirm("Cancel this order? Stock will be restored.")) return;
+    setCancellingId(orderId);
+    try {
+      const res = await fetch(`${API_BASE}/orders/${orderId}/cancel`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${userInfo.token}`,
+        },
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        alert(data.message || "Failed to cancel order");
+        return;
+      }
+      setOrders((prev) => prev.map((o) => (o._id === orderId ? { ...o, status: "cancelled" } : o)));
+    } catch {
+      alert("Failed to cancel order");
+    } finally {
+      setCancellingId(null);
+    }
+  };
 
   useEffect(() => {
     if (authLoading) return;
@@ -287,29 +315,41 @@ export default function OrdersPage() {
                     )}
                   </div>
 
-                  {/* Footer with Total and View Details */}
-                  <div className="flex items-center justify-between pt-4 border-t border-gray-700">
+                  {/* Footer with Total, Cancel (if allowed), and View Details */}
+                  <div className="flex items-center justify-between pt-4 border-t border-gray-700 flex-wrap gap-2">
                     <div>
                       <p className="text-xs sm:text-sm text-gray-400">Total Amount</p>
                       <p className="font-bold text-lg sm:text-xl text-green-400">
                         ₹{order.totalPrice.toLocaleString()}
                       </p>
                     </div>
-                    <div className="flex items-center gap-2 text-green-400 group-hover:text-green-300 transition-colors">
-                      <span className="text-sm sm:text-base font-medium">View Details</span>
-                      <svg
-                        className="w-4 h-4 sm:w-5 sm:h-5 transform group-hover:translate-x-1 transition-transform"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M9 5l7 7-7 7"
-                        />
-                      </svg>
+                    <div className="flex items-center gap-2">
+                      {(orderStatus === "pending" || orderStatus === "processing") && (
+                        <button
+                          type="button"
+                          onClick={(e) => handleCancelOrder(e, order._id)}
+                          disabled={cancellingId === order._id}
+                          className="px-3 py-1.5 text-sm font-medium rounded-lg border border-red-500/50 text-red-400 hover:bg-red-500/10 disabled:opacity-50"
+                        >
+                          {cancellingId === order._id ? "Cancelling..." : "Cancel order"}
+                        </button>
+                      )}
+                      <span className="flex items-center gap-2 text-green-400 group-hover:text-green-300 transition-colors">
+                        <span className="text-sm sm:text-base font-medium">View Details</span>
+                        <svg
+                          className="w-4 h-4 sm:w-5 sm:h-5 transform group-hover:translate-x-1 transition-transform"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M9 5l7 7-7 7"
+                          />
+                        </svg>
+                      </span>
                     </div>
                   </div>
                 </div>

@@ -179,6 +179,7 @@ export default function HomeClient() {
   const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
   const hasInitialFetchRef = useRef(false);
   const [hasFetchedOnce, setHasFetchedOnce] = useState(false);
+  const [fetchError, setFetchError] = useState<string | null>(null);
   const filtersRef = useRef(filters);
   const searchQueryRef = useRef(searchQuery);
 
@@ -203,12 +204,11 @@ export default function HomeClient() {
     try {
       isFetchingRef.current = true;
       setLoading(true);
-      
-      // Use refs to get current values
+      setFetchError(null);
+
       const currentFilters = filtersRef.current;
       const currentSearch = searchQueryRef.current;
-      
-      // Build query string
+
       const params = new URLSearchParams();
       if (currentSearch) params.append("search", currentSearch);
       if (currentFilters.category) params.append("category", currentFilters.category);
@@ -218,21 +218,19 @@ export default function HomeClient() {
       params.append("sort", currentFilters.sort);
       params.append("order", currentFilters.order);
 
-      const res = await fetch(
-        `${API_BASE}/products?${params.toString()}`
-      );
-      
+      const res = await fetch(`${API_BASE}/products?${params.toString()}`);
+
       if (!res.ok) {
         if (res.status === 429) {
-          console.warn("Rate limited. Please wait before making more requests.");
+          setFetchError("Too many requests. Please wait a moment.");
           return;
         }
-        throw new Error(`Failed to fetch products: ${res.status}`);
+        setFetchError("Could not load products. Please try again.");
+        return;
       }
-      
+
       const data = await res.json();
-      
-      // Handle both old format (array) and new format (object with products)
+
       if (Array.isArray(data)) {
         setProducts(data);
         setFilteredProducts(data);
@@ -244,25 +242,29 @@ export default function HomeClient() {
           setBrands(data.filters.brands || []);
         }
       }
+      setHasFetchedOnce(true);
+      setFetchError(null);
     } catch (error) {
       console.error("Failed to load products:", error);
+      setFetchError("Could not reach server. Make sure the backend is running.");
     } finally {
       setLoading(false);
       isFetchingRef.current = false;
-      setHasFetchedOnce(true); // so we don't show "No products found" before first fetch
     }
-  }, []); // No dependencies - uses refs instead
+  }, []);
 
   // Fetch products when user is logged in (once per "session" on this page)
   useEffect(() => {
     if (!isLoggedIn) {
       hasInitialFetchRef.current = false;
       setHasFetchedOnce(false);
+      setFetchError(null);
       return;
     }
     if (!hasInitialFetchRef.current && !isFetchingRef.current) {
       hasInitialFetchRef.current = true;
       setLoading(true);
+      setFetchError(null);
       fetchProducts();
     }
   }, [isLoggedIn, fetchProducts]);
@@ -430,11 +432,32 @@ export default function HomeClient() {
         />
       )}
 
-      {/* Products Grid – show loading until first fetch completes (fixes "No products" flash after login) */}
-      {loading || (isLoggedIn && !hasFetchedOnce) ? (
+      {/* Products Grid */}
+      {loading || (isLoggedIn && !hasFetchedOnce && !fetchError) ? (
         <div className="text-center py-20">
           <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-white"></div>
           <p className="mt-4 text-gray-400">Loading products...</p>
+        </div>
+      ) : fetchError ? (
+        <div className="text-center py-20">
+          <div className="text-6xl mb-4">⚠️</div>
+          <h2 className="text-2xl font-semibold mb-2 text-red-400/90">
+            {fetchError}
+          </h2>
+          <p className="text-gray-400 mb-6">
+            This can happen if the backend is starting or the network is slow. Click Retry to try again.
+          </p>
+          <button
+            type="button"
+            onClick={() => {
+              setFetchError(null);
+              setLoading(true);
+              fetchProducts();
+            }}
+            className="px-6 py-3 bg-green-600 hover:bg-green-700 rounded-lg text-white font-medium transition-colors"
+          >
+            Retry
+          </button>
         </div>
       ) : filteredProducts.length === 0 ? (
         <div className="text-center py-20">

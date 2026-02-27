@@ -169,6 +169,7 @@ export default function OrderDetailsPage() {
   const [order, setOrder] = useState<Order | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [cancelling, setCancelling] = useState(false);
 
   useEffect(() => {
     if (authLoading) return;
@@ -258,6 +259,32 @@ export default function OrderDetailsPage() {
   }
 
   const orderStatus = order.status || (order.isDelivered ? "delivered" : order.isPaid ? "processing" : "pending");
+  const canCancel = orderStatus === "pending" || orderStatus === "processing";
+
+  const handleCancelOrder = async () => {
+    if (!userInfo?.token || !canCancel || cancelling) return;
+    if (!confirm("Cancel this order? Stock will be restored.")) return;
+    setCancelling(true);
+    try {
+      const res = await fetch(`${API_BASE}/orders/${order._id}/cancel`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${userInfo.token}`,
+        },
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        alert(data.message || "Failed to cancel order");
+        return;
+      }
+      setOrder({ ...order, status: "cancelled" });
+    } catch {
+      alert("Failed to cancel order");
+    } finally {
+      setCancelling(false);
+    }
+  };
 
   return (
     <div className="max-w-4xl mx-auto p-4 sm:p-6">
@@ -287,7 +314,19 @@ export default function OrderDetailsPage() {
               })}
             </p>
           </div>
-          <StatusBadge status={orderStatus} />
+          <div className="flex items-center gap-3 flex-wrap">
+            {canCancel && (
+              <button
+                type="button"
+                onClick={handleCancelOrder}
+                disabled={cancelling}
+                className="px-4 py-2 text-sm font-medium rounded-lg border border-red-500/50 text-red-400 hover:bg-red-500/10 disabled:opacity-50"
+              >
+                {cancelling ? "Cancelling..." : "Cancel order"}
+              </button>
+            )}
+            <StatusBadge status={orderStatus} />
+          </div>
         </div>
       </div>
 

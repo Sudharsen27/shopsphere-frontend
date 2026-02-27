@@ -104,14 +104,22 @@ export default function ProductPage() {
       setError(null);
       try {
         const res = await fetch(`${API_BASE}/products/${productId}`);
+        const data = await res.json().catch(() => ({}));
         if (!res.ok) {
-          throw new Error("Failed to fetch product");
+          const message = data.message || (res.status === 404 ? "Product not found" : `Failed to load product (${res.status})`);
+          setError(message);
+          setProduct(null);
+          setLoading(false);
+          return;
         }
-        const data = await res.json();
         setProduct(data);
       } catch (err) {
         console.error("Fetch product error:", err);
-        setError("Failed to load product");
+        const isNetworkError = err instanceof TypeError && (err.message === "Failed to fetch" || err.message?.includes("fetch"));
+        setError(isNetworkError
+          ? "Could not reach server. Make sure the backend is running and NEXT_PUBLIC_API_URL is correct."
+          : "Failed to load product");
+        setProduct(null);
       } finally {
         setLoading(false);
       }

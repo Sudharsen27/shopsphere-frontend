@@ -944,7 +944,8 @@ export default function CheckoutPage() {
       }
 
       if (!res.ok) {
-        alert(data.message || "Order failed");
+        const msg = data.message || "Order failed";
+        alert(msg.includes("stock") || msg.includes("Stock") ? `${msg} Please update your cart and try again.` : msg);
         setPlacing(false);
         return;
       }
