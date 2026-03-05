@@ -211,6 +211,7 @@ export async function getAdminStats() {
     lowStockProducts: Array<{ _id: string; name: string; countInStock: number; price: number }>;
     recentOrders: any[];
     topProducts: Array<{ name: string; totalQty: number; totalRevenue: number; productId: string }>;
+    salesOverTime?: Array<{ date: string; orders: number; revenue: number }>;
   }>("/admin/stats");
 }
 

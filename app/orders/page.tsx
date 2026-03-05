@@ -324,13 +324,17 @@ export default function OrdersPage() {
                       </p>
                     </div>
                     <div className="flex items-center gap-2">
-                      <Link
-                        href={`/track?order=${order._id}&email=${encodeURIComponent(userInfo?.email ?? "")}`}
-                        onClick={(e) => e.stopPropagation()}
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          router.push(`/track?order=${order._id}&email=${encodeURIComponent(userInfo?.email ?? "")}`);
+                        }}
                         className="px-3 py-1.5 text-sm font-medium rounded-lg bg-green-600/80 hover:bg-green-600 text-white"
                       >
                         Track
-                      </Link>
+                      </button>
                       {(orderStatus === "pending" || orderStatus === "processing") && (
                         <button
                           type="button"

@@ -34,6 +34,8 @@ export default function AdminProductsPage() {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [bulkActionLoading, setBulkActionLoading] = useState(false);
 
   useEffect(() => {
     fetchProducts();
@@ -53,20 +55,20 @@ export default function AdminProductsPage() {
 
   const handleDelete = async (productId: string) => {
     if (!confirm("Are you sure you want to delete this product?")) return;
-
     if (!userInfo) return;
-
     setDeletingId(productId);
     try {
       const res = await fetch(`${API_BASE}/products/${productId}`, {
         method: "DELETE",
-        headers: {
-          Authorization: `Bearer ${userInfo.token}`,
-        },
+        headers: { Authorization: `Bearer ${userInfo.token}` },
       });
-
       if (res.ok) {
         setProducts(products.filter((p) => p._id !== productId));
+        setSelectedIds((prev) => {
+          const next = new Set(prev);
+          next.delete(productId);
+          return next;
+        });
         alert("Product deleted successfully");
       } else {
         const data = await res.json();
@@ -77,6 +79,65 @@ export default function AdminProductsPage() {
       alert("Failed to delete product");
     } finally {
       setDeletingId(null);
+    }
+  };
+
+  const toggleSelect = (id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedIds.size === products.length) setSelectedIds(new Set());
+    else setSelectedIds(new Set(products.map((p) => p._id)));
+  };
+
+  const handleBulkDelete = async () => {
+    const ids = Array.from(selectedIds);
+    if (ids.length === 0 || !userInfo) return;
+    if (!confirm(`Delete ${ids.length} selected product(s)?`)) return;
+    setBulkActionLoading(true);
+    try {
+      const res = await fetch(`${API_BASE}/admin/products/bulk`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${userInfo.token}` },
+        body: JSON.stringify({ ids, action: "delete" }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok) {
+        setProducts(products.filter((p) => !selectedIds.has(p._id)));
+        setSelectedIds(new Set());
+        alert(data.message || "Deleted successfully");
+      } else {
+        alert(data.message || "Bulk delete failed");
+      }
+    } catch {
+      alert("Bulk delete failed");
+    } finally {
+      setBulkActionLoading(false);
+    }
+  };
+
+  const handleExportCsv = async () => {
+    if (!userInfo) return;
+    try {
+      const res = await fetch(`${API_BASE}/admin/products/export`, {
+        headers: { Authorization: `Bearer ${userInfo.token}` },
+      });
+      if (!res.ok) throw new Error("Export failed");
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `products-${new Date().toISOString().slice(0, 10)}.csv`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch {
+      alert("Export failed");
     }
   };
 
@@ -94,13 +155,43 @@ export default function AdminProductsPage() {
               </Link>
               <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold">Manage Products</h1>
             </div>
-            <Link
-              href="/admin/products/new"
-              className="bg-green-600 hover:bg-green-700 px-4 sm:px-6 py-2 sm:py-3 rounded-lg font-semibold text-sm sm:text-base text-center"
-            >
-              + Add Product
-            </Link>
+            <div className="flex flex-wrap gap-2">
+              <button
+                type="button"
+                onClick={handleExportCsv}
+                className="bg-gray-700 hover:bg-gray-600 px-4 py-2 rounded-lg font-medium text-sm"
+              >
+                Export CSV
+              </button>
+              <Link
+                href="/admin/products/new"
+                className="bg-green-600 hover:bg-green-700 px-4 sm:px-6 py-2 sm:py-3 rounded-lg font-semibold text-sm sm:text-base text-center"
+              >
+                + Add Product
+              </Link>
+            </div>
           </div>
+
+          {selectedIds.size > 0 && (
+            <div className="mb-4 p-3 bg-gray-900 border border-gray-700 rounded-lg flex flex-wrap items-center gap-2">
+              <span className="text-sm text-gray-300">{selectedIds.size} selected</span>
+              <button
+                type="button"
+                onClick={handleBulkDelete}
+                disabled={bulkActionLoading}
+                className="bg-red-600 hover:bg-red-700 disabled:opacity-50 px-3 py-1.5 rounded text-sm"
+              >
+                {bulkActionLoading ? "Deleting…" : "Delete selected"}
+              </button>
+              <button
+                type="button"
+                onClick={() => setSelectedIds(new Set())}
+                className="bg-gray-600 hover:bg-gray-500 px-3 py-1.5 rounded text-sm"
+              >
+                Clear selection
+              </button>
+            </div>
+          )}
 
           {loading ? (
             <div className="text-center py-20">
@@ -122,6 +213,14 @@ export default function AdminProductsPage() {
               <table className="w-full border-collapse">
                 <thead>
                   <tr className="border-b border-gray-800">
+                    <th className="p-2 sm:p-4 w-10">
+                      <input
+                        type="checkbox"
+                        checked={products.length > 0 && selectedIds.size === products.length}
+                        onChange={toggleSelectAll}
+                        className="rounded"
+                      />
+                    </th>
                     <th className="text-left p-2 sm:p-4 text-xs sm:text-sm">Image</th>
                     <th className="text-left p-2 sm:p-4 text-xs sm:text-sm">Name</th>
                     <th className="text-left p-2 sm:p-4 text-xs sm:text-sm hidden sm:table-cell">Category</th>
@@ -137,6 +236,14 @@ export default function AdminProductsPage() {
                       key={product._id}
                       className="border-b border-gray-800 hover:bg-gray-900"
                     >
+                      <td className="p-2 sm:p-4">
+                        <input
+                          type="checkbox"
+                          checked={selectedIds.has(product._id)}
+                          onChange={() => toggleSelect(product._id)}
+                          className="rounded"
+                        />
+                      </td>
                       <td className="p-2 sm:p-4">
                         <div className="relative w-12 h-12 sm:w-16 sm:h-16">
                           <Image

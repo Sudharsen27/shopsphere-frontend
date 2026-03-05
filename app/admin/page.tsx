@@ -7,6 +7,7 @@ import ProtectedRoute from "../components/ProtectedRoute";
 import { useAuth } from "../context/AuthContext";
 import { getAdminStats } from "@/lib/api";
 
+type SalesDay = { date: string; orders: number; revenue: number };
 type Stats = {
   totalOrders: number;
   totalRevenue: number;
@@ -19,6 +20,7 @@ type Stats = {
   lowStockProducts: Array<{ _id: string; name: string; countInStock: number; price: number }>;
   recentOrders: any[];
   topProducts: Array<{ name: string; totalQty: number; totalRevenue: number; productId: string }>;
+  salesOverTime?: SalesDay[];
 };
 
 export default function AdminDashboard() {
@@ -26,6 +28,7 @@ export default function AdminDashboard() {
   const { userInfo } = useAuth();
   const [stats, setStats] = useState<Stats | null>(null);
   const [loading, setLoading] = useState(true);
+  const [sendingAlert, setSendingAlert] = useState(false);
 
   useEffect(() => {
     if (!userInfo || userInfo.role !== "admin") return;
@@ -34,6 +37,27 @@ export default function AdminDashboard() {
       .catch((e) => console.error("Failed to fetch stats:", e))
       .finally(() => setLoading(false));
   }, [userInfo]);
+
+  const handleSendLowStockAlert = async () => {
+    if (!userInfo?.token) return;
+    setSendingAlert(true);
+    try {
+      const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
+      const res = await fetch(`${API_BASE}/admin/low-stock/alert`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${userInfo.token}` },
+      });
+      const data = await res.json().catch(() => ({}));
+      alert(res.ok ? "Low-stock alert email sent." : data.message || "Failed to send.");
+    } catch {
+      alert("Failed to send alert.");
+    } finally {
+      setSendingAlert(false);
+    }
+  };
+
+  const salesData = stats?.salesOverTime || [];
+  const maxRevenue = Math.max(1, ...salesData.map((d) => d.revenue));
 
   return (
     <ProtectedRoute requireAdmin={true}>
@@ -91,6 +115,29 @@ export default function AdminDashboard() {
                 </div>
               </div>
 
+              {/* Sales over time chart */}
+              {salesData.length > 0 && (
+                <div className="bg-gray-900 border border-gray-800 rounded-lg p-4 sm:p-6 mb-6 sm:mb-8">
+                  <h2 className="text-lg font-semibold mb-4">Sales over time (last 30 days)</h2>
+                  <div className="flex items-end gap-1 h-40 overflow-x-auto pb-2">
+                    {salesData.slice(-30).map((d) => (
+                      <div
+                        key={d.date}
+                        className="flex-1 min-w-[8px] flex flex-col justify-end group"
+                        title={`${d.date}: ${d.orders} orders, ₹${d.revenue.toLocaleString()}`}
+                      >
+                        <div
+                          className="bg-green-500 rounded-t transition-all hover:bg-green-400"
+                          style={{ height: `${(d.revenue / maxRevenue) * 100}%`, minHeight: d.revenue > 0 ? "4px" : "0" }}
+                        />
+                        <span className="text-[10px] text-gray-500 truncate block text-center mt-1">{d.date.slice(5)}</span>
+                      </div>
+                    ))}
+                  </div>
+                  <p className="text-xs text-gray-500 mt-2">Bar height = revenue (₹) per day</p>
+                </div>
+              )}
+
               {/* Recent Orders & Low Stock & Top Products */}
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6 mb-6 sm:mb-8">
                 <div className="bg-gray-900 border border-gray-800 rounded-lg p-4 sm:p-6 lg:col-span-2">
@@ -137,7 +184,19 @@ export default function AdminDashboard() {
                   ) : (
                     <p className="text-gray-500 text-sm">All good</p>
                   )}
-                  <Link href="/admin/products" className="inline-block mt-3 text-sm text-green-400 hover:underline">Manage products →</Link>
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    <Link href="/admin/products" className="text-sm text-green-400 hover:underline">Manage products →</Link>
+                    {stats.lowStockCount > 0 && (
+                      <button
+                        type="button"
+                        onClick={handleSendLowStockAlert}
+                        disabled={sendingAlert}
+                        className="text-sm bg-amber-600 hover:bg-amber-700 disabled:opacity-50 px-2 py-1 rounded"
+                      >
+                        {sendingAlert ? "Sending…" : "Email low-stock report"}
+                      </button>
+                    )}
+                  </div>
                 </div>
               </div>
 

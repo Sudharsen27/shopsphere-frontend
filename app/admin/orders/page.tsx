@@ -30,14 +30,20 @@ type Order = {
   totalPrice: number;
   isPaid: boolean;
   isDelivered: boolean;
+  status?: string;
   createdAt: string;
 };
+
+const STATUS_OPTIONS = ["pending", "processing", "shipped", "delivered", "cancelled"] as const;
 
 export default function AdminOrdersPage() {
   const { userInfo } = useAuth();
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [updatingId, setUpdatingId] = useState<string | null>(null);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [bulkStatus, setBulkStatus] = useState<string>(STATUS_OPTIONS[0]);
+  const [bulkLoading, setBulkLoading] = useState(false);
 
   useEffect(() => {
     fetchOrders();
@@ -97,19 +103,124 @@ export default function AdminOrdersPage() {
     }
   };
 
+  const toggleSelect = (id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedIds.size === orders.length) setSelectedIds(new Set());
+    else setSelectedIds(new Set(orders.map((o) => o._id)));
+  };
+
+  const handleBulkStatusUpdate = async () => {
+    const ids = Array.from(selectedIds);
+    if (ids.length === 0 || !userInfo) return;
+    setBulkLoading(true);
+    try {
+      const res = await fetch(`${API_BASE}/admin/orders/bulk`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${userInfo.token}` },
+        body: JSON.stringify({ ids, status: bulkStatus }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok) {
+        setOrders(
+          orders.map((o) =>
+            selectedIds.has(o._id)
+              ? { ...o, status: bulkStatus, isDelivered: bulkStatus === "delivered" }
+              : o
+          )
+        );
+        setSelectedIds(new Set());
+        alert(data.message || "Orders updated");
+      } else {
+        alert(data.message || "Bulk update failed");
+      }
+    } catch {
+      alert("Bulk update failed");
+    } finally {
+      setBulkLoading(false);
+    }
+  };
+
+  const handleExportCsv = async () => {
+    if (!userInfo) return;
+    try {
+      const res = await fetch(`${API_BASE}/admin/orders/export`, {
+        headers: { Authorization: `Bearer ${userInfo.token}` },
+      });
+      if (!res.ok) throw new Error("Export failed");
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `orders-${new Date().toISOString().slice(0, 10)}.csv`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch {
+      alert("Export failed");
+    }
+  };
+
   return (
     <ProtectedRoute requireAdmin={true}>
       <div className="min-h-screen bg-black text-white p-4 sm:p-6">
         <div className="max-w-7xl mx-auto">
-          <div className="mb-6 sm:mb-8">
-            <Link
-              href="/admin"
-              className="text-xs sm:text-sm text-gray-400 hover:text-white mb-2 inline-block"
+          <div className="mb-6 sm:mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div>
+              <Link
+                href="/admin"
+                className="text-xs sm:text-sm text-gray-400 hover:text-white mb-2 inline-block"
+              >
+                ← Back to Dashboard
+              </Link>
+              <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold">Manage Orders</h1>
+            </div>
+            <button
+              type="button"
+              onClick={handleExportCsv}
+              className="bg-gray-700 hover:bg-gray-600 px-4 py-2 rounded-lg font-medium text-sm"
             >
-              ← Back to Dashboard
-            </Link>
-            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold">Manage Orders</h1>
+              Export CSV
+            </button>
           </div>
+
+          {selectedIds.size > 0 && (
+            <div className="mb-4 p-3 bg-gray-900 border border-gray-700 rounded-lg flex flex-wrap items-center gap-2">
+              <span className="text-sm text-gray-300">{selectedIds.size} selected</span>
+              <select
+                value={bulkStatus}
+                onChange={(e) => setBulkStatus(e.target.value)}
+                className="bg-gray-800 border border-gray-600 rounded px-2 py-1.5 text-sm"
+              >
+                {STATUS_OPTIONS.map((s) => (
+                  <option key={s} value={s}>
+                    {s}
+                  </option>
+                ))}
+              </select>
+              <button
+                type="button"
+                onClick={handleBulkStatusUpdate}
+                disabled={bulkLoading}
+                className="bg-blue-600 hover:bg-blue-700 disabled:opacity-50 px-3 py-1.5 rounded text-sm"
+              >
+                {bulkLoading ? "Updating…" : "Update status"}
+              </button>
+              <button
+                type="button"
+                onClick={() => setSelectedIds(new Set())}
+                className="bg-gray-600 hover:bg-gray-500 px-3 py-1.5 rounded text-sm"
+              >
+                Clear selection
+              </button>
+            </div>
+          )}
 
           {loading ? (
             <div className="text-center py-20">
@@ -122,11 +233,29 @@ export default function AdminOrdersPage() {
             </div>
           ) : (
             <div className="space-y-3 sm:space-y-4">
+              <div className="flex items-center gap-2 mb-2">
+                <input
+                  type="checkbox"
+                  checked={orders.length > 0 && selectedIds.size === orders.length}
+                  onChange={toggleSelectAll}
+                  className="rounded"
+                />
+                <span className="text-sm text-gray-400">Select all</span>
+              </div>
               {orders.map((order) => (
                 <div
                   key={order._id}
-                  className="bg-gray-900 border border-gray-800 rounded-lg p-4 sm:p-6"
+                  className="bg-gray-900 border border-gray-800 rounded-lg p-4 sm:p-6 flex gap-3"
                 >
+                  <div className="pt-1">
+                    <input
+                      type="checkbox"
+                      checked={selectedIds.has(order._id)}
+                      onChange={() => toggleSelect(order._id)}
+                      className="rounded"
+                    />
+                  </div>
+                  <div className="flex-1 min-w-0">
                   <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-3 sm:gap-0 mb-3 sm:mb-4">
                     <div>
                       <div className="text-xs sm:text-sm text-gray-400">Order ID</div>
@@ -203,7 +332,13 @@ export default function AdminOrdersPage() {
                             : "Mark Delivered"}
                         </button>
                       )}
+                      {order.status && order.status !== "delivered" && (
+                        <span className="bg-gray-600 px-2 sm:px-3 py-1 rounded text-xs sm:text-sm capitalize">
+                          {order.status}
+                        </span>
+                      )}
                     </div>
+                  </div>
                   </div>
                 </div>
               ))}
