@@ -34,9 +34,12 @@ export function WishlistProvider({ children }: { children: React.ReactNode }) {
       if (res.ok) {
         const data = await res.json();
         const list = data.wishlist || [];
-        const idStrings: string[] = list
-          .map((p: { _id?: string }) => p._id?.toString())
-          .filter((id): id is string => Boolean(id));
+        const mapped: (string | undefined)[] = list.map(
+          (p: { _id?: string }) => p._id?.toString()
+        );
+        const idStrings = mapped.filter(
+          (id: string | undefined): id is string => id != null && id !== ""
+        );
         setWishlistIds(new Set<string>(idStrings));
       }
     } catch {
