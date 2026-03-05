@@ -8,6 +8,7 @@ import AddToCartButton from "@/app/components/AddToCartButton";
 import WishlistButton from "@/app/components/WishlistButton";
 import ProductReviews from "@/app/components/ProductReviews";
 import ReviewForm from "@/app/components/ReviewForm";
+import { ProductDetailSkeleton } from "@/app/components/ProductCardSkeleton";
 import { useAuth } from "@/app/context/AuthContext";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
@@ -97,6 +98,7 @@ export default function ProductPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [refreshReviews, setRefreshReviews] = useState(0);
+  const [relatedProducts, setRelatedProducts] = useState<Product[]>([]);
 
   useEffect(() => {
     const fetchProduct = async () => {
@@ -144,19 +146,28 @@ export default function ProductPage() {
       }
     };
     fetchProduct();
-    // Trigger reviews refresh
     setRefreshReviews((prev) => prev + 1);
   };
 
+  // Fetch related products (same category, exclude current)
+  useEffect(() => {
+    if (!product?.category) {
+      setRelatedProducts([]);
+      return;
+    }
+    const params = new URLSearchParams({ category: product.category, sort: "createdAt", order: "desc" });
+    fetch(`${API_BASE}/products?${params}`)
+      .then((res) => res.ok ? res.json() : { products: [] })
+      .then((data) => {
+        const list = Array.isArray(data) ? data : (data.products || []);
+        const related = list.filter((p: Product) => p._id !== productId).slice(0, 4);
+        setRelatedProducts(related);
+      })
+      .catch(() => setRelatedProducts([]));
+  }, [product?.category, productId]);
+
   if (loading) {
-    return (
-      <main className="p-4 sm:p-6 max-w-4xl mx-auto">
-        <div className="text-center py-20">
-          <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-white"></div>
-          <p className="mt-4 text-gray-400">Loading product...</p>
-        </div>
-      </main>
-    );
+    return <ProductDetailSkeleton />;
   }
 
   if (error || !product) {
@@ -242,10 +253,41 @@ export default function ProductPage() {
       </div>
 
       {/* Reviews Section */}
-      <div className="border-t border-gray-700 pt-6 sm:pt-8">
+      <div className="border-t border-[var(--card-border)] pt-6 sm:pt-8">
         <ProductReviews productId={productId} refreshKey={refreshReviews} />
         <ReviewForm productId={productId} onReviewSubmitted={handleReviewSubmitted} />
       </div>
+
+      {/* Related Products */}
+      {relatedProducts.length > 0 && (
+        <div className="border-t border-[var(--card-border)] pt-8 mt-8">
+          <h2 className="text-xl font-bold mb-4 text-[var(--foreground)]">You might also like</h2>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+            {relatedProducts.map((p) => (
+              <Link
+                key={p._id}
+                href={`/product/${p._id}`}
+                className="group block border border-[var(--card-border)] rounded-lg p-3 bg-[var(--card-bg)] hover:border-[var(--accent)] transition-all duration-200 active:scale-[0.98]"
+              >
+                <div className="relative aspect-square w-full mb-2 rounded-md bg-[var(--card-border)]/20 overflow-hidden">
+                  <Image
+                    src={getImageSrc(p.image)}
+                    alt={p.name}
+                    fill
+                    className="object-cover group-hover:scale-105 transition-transform duration-200"
+                    sizes="(max-width: 640px) 50vw, 25vw"
+                    unoptimized={p.image?.includes("unsplash.com") || !p.image}
+                  />
+                </div>
+                <p className="text-sm font-medium line-clamp-2 group-hover:text-[var(--accent)] transition-colors">
+                  {p.name}
+                </p>
+                <p className="text-sm font-bold text-[var(--accent)] mt-1">₹{p.price.toLocaleString()}</p>
+              </Link>
+            ))}
+          </div>
+        </div>
+      )}
     </main>
   );
 }

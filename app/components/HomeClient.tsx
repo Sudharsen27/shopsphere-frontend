@@ -125,6 +125,7 @@ import Link from "next/link";
 import SearchBar from "./SearchBar";
 import ProductFilter from "./ProductFilter";
 import WishlistButton from "./WishlistButton";
+import { ProductGridSkeleton } from "./ProductCardSkeleton";
 import { useAuth } from "../context/AuthContext";
 
 type Product = {
@@ -180,8 +181,16 @@ export default function HomeClient() {
   const hasInitialFetchRef = useRef(false);
   const [hasFetchedOnce, setHasFetchedOnce] = useState(false);
   const [fetchError, setFetchError] = useState<string | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
   const filtersRef = useRef(filters);
   const searchQueryRef = useRef(searchQuery);
+
+  const PAGE_SIZE = 12;
+  const totalPages = Math.max(1, Math.ceil(filteredProducts.length / PAGE_SIZE));
+  const paginatedProducts = filteredProducts.slice(
+    (currentPage - 1) * PAGE_SIZE,
+    currentPage * PAGE_SIZE
+  );
 
   // Keep refs in sync
   useEffect(() => {
@@ -253,12 +262,18 @@ export default function HomeClient() {
     }
   }, []);
 
+  // Reset to page 1 when filters/search change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, filters.category, filters.brand, filters.minPrice, filters.maxPrice, filters.sort, filters.order]);
+
   // Fetch products when user is logged in (once per "session" on this page)
   useEffect(() => {
     if (!isLoggedIn) {
       hasInitialFetchRef.current = false;
       setHasFetchedOnce(false);
       setFetchError(null);
+      setCurrentPage(1);
       return;
     }
     if (!hasInitialFetchRef.current && !isFetchingRef.current) {
@@ -365,13 +380,18 @@ export default function HomeClient() {
   }
 
   /* =====================================================
-     ⏳ LOADING STATE
+     ⏳ LOADING STATE (skeleton grid)
      ===================================================== */
   if (loading) {
     return (
-      <p className="text-center mt-20 text-gray-400">
-        Loading...
-      </p>
+      <main className="p-6 max-w-7xl mx-auto">
+        <div className="mb-8">
+          <div className="h-10 bg-gray-800 rounded w-64 mb-2 animate-pulse" />
+          <div className="h-5 bg-gray-800 rounded w-96 animate-pulse" />
+        </div>
+        <div className="mb-6 h-12 bg-gray-800 rounded animate-pulse" />
+        <ProductGridSkeleton count={8} />
+      </main>
     );
   }
 
@@ -434,10 +454,7 @@ export default function HomeClient() {
 
       {/* Products Grid */}
       {loading || (isLoggedIn && !hasFetchedOnce && !fetchError) ? (
-        <div className="text-center py-20">
-          <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-white"></div>
-          <p className="mt-4 text-gray-400">Loading products...</p>
-        </div>
+        <ProductGridSkeleton count={8} />
       ) : fetchError ? (
         <div className="text-center py-20">
           <div className="text-6xl mb-4">⚠️</div>
@@ -473,14 +490,39 @@ export default function HomeClient() {
         </div>
       ) : (
         <>
-          <div className="mb-4 text-sm text-gray-400">
-            Showing {filteredProducts.length} product{filteredProducts.length !== 1 ? "s" : ""}
+          <div className="mb-4 flex flex-wrap items-center justify-between gap-4">
+            <span className="text-sm text-gray-400">
+              Showing {(currentPage - 1) * PAGE_SIZE + 1}–{Math.min(currentPage * PAGE_SIZE, filteredProducts.length)} of {filteredProducts.length} product{filteredProducts.length !== 1 ? "s" : ""}
+            </span>
+            {totalPages > 1 && (
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                  disabled={currentPage === 1}
+                  className="px-3 py-1.5 rounded-lg border border-gray-600 bg-gray-800 text-gray-300 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-700 transition-colors"
+                >
+                  Previous
+                </button>
+                <span className="text-sm text-gray-400">
+                  Page {currentPage} of {totalPages}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                  disabled={currentPage === totalPages}
+                  className="px-3 py-1.5 rounded-lg border border-gray-600 bg-gray-800 text-gray-300 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-700 transition-colors"
+                >
+                  Next
+                </button>
+              </div>
+            )}
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {filteredProducts.map((product) => (
+            {paginatedProducts.map((product) => (
               <div
                 key={product._id}
-                className="border border-gray-700 rounded-lg p-3 sm:p-4 hover:border-green-500 hover:shadow-lg transition-all duration-200 bg-gray-900 relative group"
+                className="border border-[var(--card-border)] rounded-lg p-3 sm:p-4 hover:border-[var(--accent)] hover:shadow-lg transition-all duration-200 bg-[var(--card-bg)] relative group active:scale-[0.99]"
               >
                 {/* Wishlist Heart Button */}
                 <div className="absolute top-2 right-2 z-10">

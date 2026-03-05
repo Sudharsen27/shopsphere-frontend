@@ -7,6 +7,7 @@ import Link from "next/link";
 import { useAuth } from "../context/AuthContext";
 import { useWishlist } from "../context/WishlistContext";
 import WishlistButton from "../components/WishlistButton";
+import EmptyState from "../components/EmptyState";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
 
@@ -127,30 +128,17 @@ export default function WishlistPage() {
       </h1>
 
       {products.length === 0 ? (
-        <div className="text-center py-20 border border-gray-700 rounded-lg bg-gray-900">
-          <svg
-            className="w-16 h-16 sm:w-20 sm:h-20 mx-auto text-gray-400 mb-4"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
-            />
-          </svg>
-          <p className="text-gray-400 text-sm sm:text-base mb-4">
-            Your wishlist is empty
-          </p>
-          <Link
-            href="/"
-            className="inline-block text-blue-400 hover:text-blue-300 underline text-sm sm:text-base"
-          >
-            Browse products
-          </Link>
-        </div>
+        <EmptyState
+          icon={
+            <svg className="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+            </svg>
+          }
+          title="Your wishlist is empty"
+          description="Save items you like and find them here later."
+          actionLabel="Browse products"
+          actionHref="/"
+        />
       ) : (
         <>
           <div className="mb-4 text-sm text-gray-400">

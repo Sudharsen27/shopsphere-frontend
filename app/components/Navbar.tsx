@@ -249,10 +249,12 @@ import { useState } from "react";
 import Link from "next/link";
 import { useCart } from "../context/CartContext";
 import { useAuth } from "../context/AuthContext";
+import { useTheme } from "../context/ThemeContext";
 
 export default function Navbar() {
   const { cartItems } = useCart();
   const { userInfo, logout } = useAuth();
+  const { resolved, setTheme } = useTheme();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const totalQty = cartItems.reduce(
@@ -261,23 +263,42 @@ export default function Navbar() {
   );
 
   return (
-    <nav className="sticky top-0 z-50 bg-gray-900 border-b border-gray-700">
+    <nav className="sticky top-0 z-50 bg-[var(--card-bg)] border-b border-[var(--card-border)]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
-          <Link href="/" className="text-xl sm:text-2xl font-bold text-white hover:text-green-400 transition-colors">
+          <Link href="/" className="text-xl sm:text-2xl font-bold text-[var(--foreground)] hover:text-[var(--accent)] transition-colors duration-200">
             ShopSphere
           </Link>
 
           {/* Desktop Menu */}
-          <div className="hidden md:flex items-center gap-4 lg:gap-6">
+          <div className="hidden md:flex items-center gap-2 lg:gap-4">
+            {/* Theme Toggle */}
+            <div className="flex items-center rounded-lg border border-[var(--card-border)] p-0.5 mr-2">
+              <button
+                type="button"
+                onClick={() => setTheme(resolved === "dark" ? "light" : "dark")}
+                className="p-2 rounded-md text-[var(--muted)] hover:text-[var(--foreground)] hover:bg-[var(--card-border)]/30 transition-colors duration-200 active:scale-95"
+                aria-label={resolved === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+              >
+                {resolved === "dark" ? (
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+                  </svg>
+                ) : (
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+                  </svg>
+                )}
+              </button>
+            </div>
             {!userInfo ? (
-              <Link href="/login" className="font-medium text-white hover:text-green-400 transition-colors px-3 py-2">
+              <Link href="/login" className="font-medium text-[var(--foreground)] hover:text-[var(--accent)] transition-colors duration-200 px-3 py-2 rounded-md active:scale-[0.98]">
                 Login
               </Link>
             ) : (
               <>
-                <Link href="/cart" className="font-medium text-white hover:text-green-400 transition-colors px-3 py-2 relative">
+                <Link href="/cart" className="font-medium text-[var(--foreground)] hover:text-[var(--accent)] transition-colors duration-200 px-3 py-2 rounded-md relative active:scale-[0.98]">
                   Cart
                   {totalQty > 0 && (
                     <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
@@ -286,27 +307,27 @@ export default function Navbar() {
                   )}
                 </Link>
 
-                <Link href="/wishlist" className="font-medium text-white hover:text-green-400 transition-colors px-3 py-2">
+                <Link href="/wishlist" className="font-medium text-[var(--foreground)] hover:text-[var(--accent)] transition-colors duration-200 px-3 py-2 rounded-md active:scale-[0.98]">
                   Wishlist
                 </Link>
 
-                <Link href="/orders" className="font-medium text-white hover:text-green-400 transition-colors px-3 py-2">
+                <Link href="/orders" className="font-medium text-[var(--foreground)] hover:text-[var(--accent)] transition-colors duration-200 px-3 py-2 rounded-md active:scale-[0.98]">
                   Orders
                 </Link>
 
-                <Link href="/profile" className="font-medium text-white hover:text-green-400 transition-colors px-3 py-2">
+                <Link href="/profile" className="font-medium text-[var(--foreground)] hover:text-[var(--accent)] transition-colors duration-200 px-3 py-2 rounded-md active:scale-[0.98]">
                   Profile
                 </Link>
 
                 {userInfo.role === "admin" && (
-                  <Link href="/admin" className="font-medium text-green-400 hover:text-green-300 transition-colors px-3 py-2">
+                  <Link href="/admin" className="font-medium text-[var(--accent)] hover:opacity-90 transition-colors duration-200 px-3 py-2 rounded-md active:scale-[0.98]">
                     Admin
                   </Link>
                 )}
 
                 <button
                   onClick={logout}
-                  className="font-medium text-red-500 hover:text-red-600 transition-colors px-3 py-2"
+                  className="font-medium text-red-500 hover:text-red-600 transition-colors duration-200 px-3 py-2 rounded-md active:scale-[0.98]"
                 >
                   Logout
                 </button>
@@ -315,11 +336,24 @@ export default function Navbar() {
           </div>
 
           {/* Mobile Menu Button */}
-          <button
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="md:hidden text-white hover:text-green-400 transition-colors p-2"
-            aria-label="Toggle menu"
-          >
+          <div className="flex items-center gap-1 md:hidden">
+            <button
+              type="button"
+              onClick={() => setTheme(resolved === "dark" ? "light" : "dark")}
+              className="p-2 text-[var(--muted)] hover:text-[var(--foreground)] rounded-md"
+              aria-label="Toggle theme"
+            >
+              {resolved === "dark" ? (
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
+              ) : (
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" /></svg>
+              )}
+            </button>
+            <button
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="text-[var(--foreground)] hover:text-[var(--accent)] transition-colors p-2 rounded-md active:scale-95"
+              aria-label="Toggle menu"
+            >
             {mobileMenuOpen ? (
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -331,16 +365,17 @@ export default function Navbar() {
             )}
           </button>
         </div>
+        </div>
 
         {/* Mobile Menu */}
         {mobileMenuOpen && (
-          <div className="md:hidden border-t border-gray-700 py-4">
+          <div className="md:hidden border-t border-[var(--card-border)] py-4 animate-[fadeIn_0.2s_ease-out]">
             <div className="flex flex-col space-y-2">
               {!userInfo ? (
                 <Link
                   href="/login"
                   onClick={() => setMobileMenuOpen(false)}
-                  className="font-medium text-white hover:text-green-400 transition-colors px-4 py-2 rounded"
+                  className="font-medium text-[var(--foreground)] hover:text-[var(--accent)] transition-colors px-4 py-2 rounded"
                 >
                   Login
                 </Link>
@@ -349,7 +384,7 @@ export default function Navbar() {
                   <Link
                     href="/cart"
                     onClick={() => setMobileMenuOpen(false)}
-                    className="font-medium text-white hover:text-green-400 transition-colors px-4 py-2 rounded flex items-center justify-between"
+                    className="font-medium text-[var(--foreground)] hover:text-[var(--accent)] transition-colors px-4 py-2 rounded flex items-center justify-between"
                   >
                     <span>Cart</span>
                     {totalQty > 0 && (
@@ -359,36 +394,20 @@ export default function Navbar() {
                     )}
                   </Link>
 
-                  <Link
-                    href="/wishlist"
-                    onClick={() => setMobileMenuOpen(false)}
-                    className="font-medium text-white hover:text-green-400 transition-colors px-4 py-2 rounded"
-                  >
+                  <Link href="/wishlist" onClick={() => setMobileMenuOpen(false)} className="font-medium text-[var(--foreground)] hover:text-[var(--accent)] transition-colors px-4 py-2 rounded">
                     Wishlist
                   </Link>
 
-                  <Link
-                    href="/orders"
-                    onClick={() => setMobileMenuOpen(false)}
-                    className="font-medium text-white hover:text-green-400 transition-colors px-4 py-2 rounded"
-                  >
+                  <Link href="/orders" onClick={() => setMobileMenuOpen(false)} className="font-medium text-[var(--foreground)] hover:text-[var(--accent)] transition-colors px-4 py-2 rounded">
                     My Orders
                   </Link>
 
-                  <Link
-                    href="/profile"
-                    onClick={() => setMobileMenuOpen(false)}
-                    className="font-medium text-white hover:text-green-400 transition-colors px-4 py-2 rounded"
-                  >
+                  <Link href="/profile" onClick={() => setMobileMenuOpen(false)} className="font-medium text-[var(--foreground)] hover:text-[var(--accent)] transition-colors px-4 py-2 rounded">
                     Profile
                   </Link>
 
                   {userInfo.role === "admin" && (
-                    <Link
-                      href="/admin"
-                      onClick={() => setMobileMenuOpen(false)}
-                      className="font-medium text-green-400 hover:text-green-300 transition-colors px-4 py-2 rounded"
-                    >
+                    <Link href="/admin" onClick={() => setMobileMenuOpen(false)} className="font-medium text-[var(--accent)] hover:opacity-90 transition-colors px-4 py-2 rounded">
                       Admin
                     </Link>
                   )}

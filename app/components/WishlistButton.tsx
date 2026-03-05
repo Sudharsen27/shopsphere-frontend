@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "../context/AuthContext";
 import { useWishlist } from "../context/WishlistContext";
+import { useToast } from "../context/ToastContext";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
 
@@ -16,6 +17,7 @@ export default function WishlistButton({ productId, className = "" }: WishlistBu
   const { userInfo } = useAuth();
   const router = useRouter();
   const wishlist = useWishlist();
+  const toast = useToast();
   const [loading, setLoading] = useState(false);
 
   // Use context when available (one API call for whole page); otherwise we'd need per-product check
@@ -38,13 +40,19 @@ export default function WishlistButton({ productId, className = "" }: WishlistBu
           method: "DELETE",
           headers: { Authorization: `Bearer ${userInfo.token}` },
         });
-        if (res.ok && wishlist) wishlist.removeFromWishlist(productId);
+        if (res.ok && wishlist) {
+          wishlist.removeFromWishlist(productId);
+          toast.info("Removed from wishlist");
+        }
       } else {
         const res = await fetch(`${API_BASE}/wishlist/${productId}`, {
           method: "POST",
           headers: { Authorization: `Bearer ${userInfo.token}` },
         });
-        if (res.ok && wishlist) wishlist.addToWishlist(productId);
+        if (res.ok && wishlist) {
+          wishlist.addToWishlist(productId);
+          toast.success("Added to wishlist");
+        }
       }
     } catch (error) {
       console.error("Failed to toggle wishlist:", error);
