@@ -100,10 +100,21 @@ import { useCart } from "../context/CartContext";
 import { useHydrated } from "../hooks/useHydrated";
 import Link from "next/link";
 import EmptyState from "../components/EmptyState";
+import Image from "next/image";
+import { useToast } from "../context/ToastContext";
+
+function getImageSrc(image?: string) {
+  const placeholder =
+    "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=500&auto=format&fit=crop&q=80";
+  if (!image) return placeholder;
+  if (image.startsWith("http")) return image;
+  return placeholder;
+}
 
 export default function CartClient() {
   const hydrated = useHydrated();
   const { cartItems, increaseQty, decreaseQty, removeFromCart } = useCart();
+  const toast = useToast();
 
   if (!hydrated) {
     return (
@@ -144,39 +155,66 @@ export default function CartClient() {
           {cartItems.map((item) => (
             <div
               key={item._id}
-              className="flex flex-col sm:flex-row items-start sm:items-center justify-between border border-[var(--card-border)] p-4 rounded-lg mb-4 bg-[var(--card-bg)] transition-shadow hover:shadow-md"
+              className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border border-[var(--card-border)] p-4 rounded-lg mb-4 bg-[var(--card-bg)] transition-shadow hover:shadow-md"
             >
-              <div className="flex flex-col gap-2 w-full sm:w-auto">
-                <h3 className="text-lg font-semibold text-[var(--foreground)]">{item.name}</h3>
-                <p className="text-[var(--muted)]">₹{item.price.toLocaleString()}</p>
+              <div className="flex gap-4 w-full">
+                <div className="relative h-16 w-16 shrink-0 rounded-lg overflow-hidden border border-[var(--card-border)] bg-[var(--card-border)]/20">
+                  <Image
+                    src={getImageSrc(item.image)}
+                    alt={item.name}
+                    fill
+                    className="object-cover"
+                    unoptimized
+                  />
+                </div>
 
-                <div className="flex items-center gap-3">
-                  <button
-                    onClick={() => decreaseQty(item._id)}
-                    className="w-9 h-9 flex items-center justify-center rounded-lg border border-[var(--card-border)] bg-transparent hover:bg-[var(--card-border)]/30 transition-colors active:scale-95"
-                    aria-label="Decrease quantity"
-                  >
-                    −
-                  </button>
+                <div className="flex flex-col gap-2 w-full">
+                  <div className="flex items-start justify-between gap-3">
+                    <h3 className="text-lg font-semibold text-[var(--foreground)] leading-snug">
+                      {item.name}
+                    </h3>
+                    <p className="text-sm text-[var(--muted)] whitespace-nowrap">
+                      ₹{(item.price * item.qty).toLocaleString()}
+                    </p>
+                  </div>
 
-                  <span className="font-medium min-w-[1.5rem] text-center">{item.qty}</span>
+                  <p className="text-[var(--muted)] text-sm">
+                    ₹{item.price.toLocaleString()} each
+                  </p>
 
-                  <button
-                    onClick={() => increaseQty(item._id)}
-                    className="w-9 h-9 flex items-center justify-center rounded-lg border border-[var(--card-border)] bg-transparent hover:bg-[var(--card-border)]/30 transition-colors active:scale-95"
-                    aria-label="Increase quantity"
-                  >
-                    +
-                  </button>
+                  <div className="flex items-center gap-3">
+                    <button
+                      onClick={() => decreaseQty(item._id)}
+                      className="w-9 h-9 flex items-center justify-center rounded-lg border border-[var(--card-border)] bg-transparent hover:bg-[var(--card-border)]/30 transition-colors active:scale-95"
+                      aria-label="Decrease quantity"
+                    >
+                      −
+                    </button>
+
+                    <span className="font-medium min-w-[1.5rem] text-center">
+                      {item.qty}
+                    </span>
+
+                    <button
+                      onClick={() => increaseQty(item._id)}
+                      className="w-9 h-9 flex items-center justify-center rounded-lg border border-[var(--card-border)] bg-transparent hover:bg-[var(--card-border)]/30 transition-colors active:scale-95"
+                      aria-label="Increase quantity"
+                    >
+                      +
+                    </button>
+
+                    <button
+                      onClick={() => {
+                        removeFromCart(item._id);
+                        toast.info("Removed from cart");
+                      }}
+                      className="ml-auto text-red-500 hover:text-red-600 text-sm font-medium transition-colors active:scale-[0.98]"
+                    >
+                      Remove
+                    </button>
+                  </div>
                 </div>
               </div>
-
-              <button
-                onClick={() => removeFromCart(item._id)}
-                className="mt-3 sm:mt-0 text-red-500 hover:text-red-600 text-sm font-medium transition-colors active:scale-[0.98]"
-              >
-                Remove
-              </button>
             </div>
           ))}
 

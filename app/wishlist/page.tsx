@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
@@ -8,6 +8,8 @@ import { useAuth } from "../context/AuthContext";
 import { useWishlist } from "../context/WishlistContext";
 import WishlistButton from "../components/WishlistButton";
 import EmptyState from "../components/EmptyState";
+import { ProductGridSkeleton } from "../components/ProductCardSkeleton";
+import { useToast } from "../context/ToastContext";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
 
@@ -31,44 +33,45 @@ export default function WishlistPage() {
   const { userInfo } = useAuth();
   const wishlistContext = useWishlist();
   const router = useRouter();
+  const toast = useToast();
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  const fetchWishlist = useCallback(async () => {
+    if (!userInfo) return;
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await fetch(`${API_BASE}/wishlist`, {
+        headers: {
+          Authorization: `Bearer ${userInfo.token}`,
+        },
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        setProducts(data.wishlist || []);
+      } else if (res.status === 401) {
+        router.push("/login");
+      } else {
+        throw new Error("Failed to fetch wishlist");
+      }
+    } catch (err) {
+      console.error("Fetch wishlist error:", err);
+      setError("Failed to load wishlist");
+    } finally {
+      setLoading(false);
+    }
+  }, [router, userInfo]);
 
   useEffect(() => {
     if (!userInfo) {
       router.push("/login");
       return;
     }
-
-    const fetchWishlist = async () => {
-      setLoading(true);
-      setError(null);
-      try {
-        const res = await fetch(`${API_BASE}/wishlist`, {
-          headers: {
-            Authorization: `Bearer ${userInfo.token}`,
-          },
-        });
-
-        if (res.ok) {
-          const data = await res.json();
-          setProducts(data.wishlist || []);
-        } else if (res.status === 401) {
-          router.push("/login");
-        } else {
-          throw new Error("Failed to fetch wishlist");
-        }
-      } catch (err) {
-        console.error("Fetch wishlist error:", err);
-        setError("Failed to load wishlist");
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchWishlist();
-  }, [userInfo, router]);
+  }, [fetchWishlist, router, userInfo]);
 
   const handleRemoveFromWishlist = async (productId: string) => {
     if (!userInfo) return;
@@ -84,9 +87,11 @@ export default function WishlistPage() {
       if (res.ok) {
         setProducts((prev) => prev.filter((p) => p._id !== productId));
         wishlistContext?.removeFromWishlist(productId);
+        toast.info("Removed from wishlist");
       }
     } catch (err) {
       console.error("Remove from wishlist error:", err);
+      toast.error("Could not remove. Try again.");
     }
   };
 
@@ -97,10 +102,11 @@ export default function WishlistPage() {
   if (loading) {
     return (
       <main className="p-4 sm:p-6 max-w-7xl mx-auto">
-        <div className="text-center py-20">
-          <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-white"></div>
-          <p className="mt-4 text-gray-400">Loading wishlist...</p>
+        <div className="mb-6">
+          <div className="h-9 w-56 bg-[var(--card-border)]/30 rounded-lg animate-pulse mb-2" />
+          <div className="h-5 w-80 bg-[var(--card-border)]/30 rounded-lg animate-pulse" />
         </div>
+        <ProductGridSkeleton count={8} />
       </main>
     );
   }
@@ -111,10 +117,11 @@ export default function WishlistPage() {
         <div className="text-center py-20">
           <p className="text-red-400 mb-4">{error}</p>
           <button
-            onClick={() => window.location.reload()}
-            className="text-blue-400 hover:text-blue-300 underline"
+            type="button"
+            onClick={fetchWishlist}
+            className="inline-flex items-center justify-center px-6 py-3 rounded-lg font-semibold text-white bg-[var(--accent)] hover:opacity-90 transition-all active:scale-[0.98]"
           >
-            Try again
+            Retry
           </button>
         </div>
       </main>
@@ -148,13 +155,13 @@ export default function WishlistPage() {
             {products.map((product) => (
               <div
                 key={product._id}
-                className="border border-gray-700 rounded-lg p-3 sm:p-4 hover:border-green-500 hover:shadow-lg transition-all duration-200 bg-gray-900 relative group"
+                className="border border-[var(--card-border)] rounded-lg p-3 sm:p-4 hover:shadow-lg transition-all duration-200 bg-[var(--card-bg)] relative group"
               >
                 {/* Wishlist Heart Button */}
                 <div className="absolute top-2 right-2 z-10">
                   <button
                     onClick={() => handleRemoveFromWishlist(product._id)}
-                    className="bg-gray-900/80 backdrop-blur-sm rounded-full p-1.5 sm:p-2 hover:bg-gray-800 transition-colors"
+                    className="bg-[var(--card-bg)]/80 backdrop-blur-sm rounded-full p-1.5 sm:p-2 hover:bg-[var(--card-border)]/30 transition-colors"
                     aria-label="Remove from wishlist"
                   >
                     <svg
@@ -168,7 +175,7 @@ export default function WishlistPage() {
                 </div>
 
                 <Link href={`/product/${product._id}`} className="block">
-                  <div className="relative h-40 sm:h-48 w-full mb-3 sm:mb-4 bg-gray-800 rounded-lg overflow-hidden">
+                  <div className="relative h-40 sm:h-48 w-full mb-3 sm:mb-4 bg-[var(--card-border)]/20 rounded-lg overflow-hidden border border-[var(--card-border)]">
                     <Image
                       src={getImageSrc(product.image)}
                       alt={product.name}
@@ -184,15 +191,15 @@ export default function WishlistPage() {
                     />
                   </div>
 
-                  <h2 className="text-base sm:text-lg font-semibold mb-2 line-clamp-2 group-hover:text-green-400 transition-colors pr-8">
+                  <h2 className="text-base sm:text-lg font-semibold mb-2 line-clamp-2 group-hover:text-[var(--accent)] transition-colors pr-8 text-[var(--foreground)]">
                     {product.name}
                   </h2>
 
                   {product.brand && (
-                    <p className="text-xs sm:text-sm text-gray-400 mb-1">{product.brand}</p>
+                    <p className="text-xs sm:text-sm text-[var(--muted)] mb-1">{product.brand}</p>
                   )}
 
-                  <p className="text-lg sm:text-xl font-bold text-green-500">
+                  <p className="text-lg sm:text-xl font-bold text-[var(--accent)]">
                     ₹{product.price.toLocaleString()}
                   </p>
                 </Link>
