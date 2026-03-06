@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { authApi, ApiError } from "@/lib/api";
+import { useToast } from "@/app/context/ToastContext";
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState("");
@@ -10,6 +11,7 @@ export default function ForgotPasswordPage() {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   const [resetUrl, setResetUrl] = useState<string | null>(null);
+  const toast = useToast();
 
   const validateEmail = (email: string): boolean => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -34,11 +36,14 @@ export default function ForgotPasswordPage() {
       const res = await authApi.forgotPassword(email.trim());
       setSuccess(true);
       if (res.resetUrl) setResetUrl(res.resetUrl);
+      toast.success("If the email exists, a reset link was sent.");
     } catch (err) {
       if (err instanceof ApiError) {
         setError(err.message);
+        toast.error(err.message);
       } else {
         setError("Something went wrong. Please try again.");
+        toast.error("Something went wrong. Please try again.");
       }
     } finally {
       setLoading(false);
@@ -47,11 +52,11 @@ export default function ForgotPasswordPage() {
 
   return (
     <section className="min-h-[80vh] flex items-center px-4 sm:px-6 py-8 sm:py-12">
-      <div className="max-w-md w-full mx-auto border border-gray-700 rounded-lg p-6 sm:p-8 bg-gray-900/50 backdrop-blur-sm">
-        <h1 className="text-2xl sm:text-3xl font-bold mb-2 text-center text-white">
+      <div className="max-w-md w-full mx-auto border border-[var(--card-border)] rounded-lg p-6 sm:p-8 bg-[var(--card-bg)]/60 backdrop-blur-sm">
+        <h1 className="text-2xl sm:text-3xl font-bold mb-2 text-center text-[var(--foreground)]">
           Forgot password
         </h1>
-        <p className="text-gray-400 text-center mb-6">
+        <p className="text-[var(--muted)] text-center mb-6">
           Enter your email and we&apos;ll send you a link to reset your password.
         </p>
 
@@ -77,7 +82,7 @@ export default function ForgotPasswordPage() {
         ) : (
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-300 mb-2">
+              <label htmlFor="email" className="block text-sm font-medium text-[var(--foreground)] mb-2">
                 Email address
               </label>
               <input
@@ -86,7 +91,7 @@ export default function ForgotPasswordPage() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="you@example.com"
-                className="w-full px-4 py-3 rounded-lg bg-gray-800 border border-gray-600 text-white placeholder-gray-500 focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                className="w-full px-4 py-3 rounded-lg bg-[var(--card-bg)] border border-[var(--card-border)] text-[var(--foreground)] placeholder-[var(--muted)] focus:ring-2 focus:ring-green-500 focus:border-transparent"
                 disabled={loading}
                 autoComplete="email"
               />
@@ -97,7 +102,7 @@ export default function ForgotPasswordPage() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-green-600 hover:bg-green-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white font-semibold py-3 rounded-lg transition flex items-center justify-center"
+              className="w-full bg-[var(--accent)] hover:opacity-90 disabled:bg-gray-600 disabled:cursor-not-allowed text-white font-semibold py-3 rounded-lg transition flex items-center justify-center active:scale-[0.99]"
             >
               {loading ? (
                 <span className="flex items-center gap-2">
