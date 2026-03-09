@@ -221,3 +221,25 @@ export async function fetchProducts() {
     cache: "no-store",
   });
 }
+
+// Orders API
+export async function getOrderById(orderId: string) {
+  return fetchApi<{
+    _id: string;
+    orderItems: Array<{ name: string; qty: number; price: number; image?: string; product?: string }>;
+    shippingAddress: { address: string; city: string; postalCode: string; country: string };
+    paymentMethod: string;
+    itemsPrice: number;
+    taxPrice: number;
+    shippingPrice: number;
+    totalPrice: number;
+    discountAmount?: number;
+    couponCode?: string;
+    createdAt: string;
+    status?: string;
+    isPaid?: boolean;
+    isDelivered?: boolean;
+    paidAt?: string;
+    deliveredAt?: string;
+  }>(`/orders/${orderId}`);
+}
