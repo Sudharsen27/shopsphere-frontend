@@ -4,6 +4,8 @@ import { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "../context/AuthContext";
+import { useToast } from "../context/ToastContext";
+import { OrderListSkeleton } from "../components/ProductCardSkeleton";
 
 type OrderItem = {
   name: string;
@@ -85,6 +87,7 @@ export default function OrdersPage() {
   const [cancellingId, setCancellingId] = useState<string | null>(null);
   const router = useRouter();
   const { userInfo, loading: authLoading } = useAuth();
+  const { success: toastSuccess, error: toastError } = useToast();
   const hasFetched = useRef(false);
   const isRedirecting = useRef(false);
 
@@ -104,12 +107,13 @@ export default function OrdersPage() {
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
-        alert(data.message || "Failed to cancel order");
+        toastError(data.message || "Failed to cancel order");
         return;
       }
       setOrders((prev) => prev.map((o) => (o._id === orderId ? { ...o, status: "cancelled" } : o)));
+      toastSuccess("Order cancelled.");
     } catch {
-      alert("Failed to cancel order");
+      toastError("Failed to cancel order");
     } finally {
       setCancellingId(null);
     }
@@ -220,12 +224,7 @@ export default function OrdersPage() {
       </div>
 
       {loading ? (
-        <div className="flex items-center justify-center py-20">
-          <div className="text-center">
-            <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-white mb-4"></div>
-            <p className="text-gray-400">Loading orders...</p>
-          </div>
-        </div>
+        <OrderListSkeleton count={4} />
       ) : error ? (
         <div className="text-center py-20">
           <div className="bg-red-500/10 border border-red-500/50 rounded-lg p-6 max-w-md mx-auto">
