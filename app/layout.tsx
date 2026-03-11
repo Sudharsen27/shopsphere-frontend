@@ -255,9 +255,37 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+const siteUrl =
+  process.env.NEXT_PUBLIC_SITE_URL ||
+  (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "http://localhost:3000");
+
 export const metadata: Metadata = {
-  title: "ShopSphere",
-  description: "Modern D2C e-commerce platform",
+  metadataBase: new URL(siteUrl),
+  title: {
+    default: "ShopSphere – Modern D2C E-Commerce",
+    template: "%s | ShopSphere",
+  },
+  description:
+    "Shop smarter with ShopSphere. Discover products, track orders, and enjoy fast delivery. Your direct-to-consumer shopping destination.",
+  keywords: ["e-commerce", "D2C", "online shopping", "ShopSphere", "products", "delivery"],
+  authors: [{ name: "ShopSphere" }],
+  openGraph: {
+    type: "website",
+    locale: "en_IN",
+    siteName: "ShopSphere",
+    title: "ShopSphere – Modern D2C E-Commerce",
+    description: "Shop smarter. Discover products, track orders, fast delivery.",
+    images: [{ url: "/logoshop.png", width: 1200, height: 630, alt: "ShopSphere" }],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "ShopSphere – Modern D2C E-Commerce",
+    description: "Shop smarter. Discover products, track orders, fast delivery.",
+  },
+  robots: {
+    index: true,
+    follow: true,
+  },
 };
 
 export default function RootLayout({

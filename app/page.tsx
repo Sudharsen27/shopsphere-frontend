@@ -285,10 +285,44 @@
 //   );
 // }
 
+import type { Metadata } from "next";
 import HomeClient from "./components/HomeClient";
 
+export const metadata: Metadata = {
+  title: "Home",
+  description:
+    "Welcome to ShopSphere. Discover products, shop with confidence, and track your orders. Your direct-to-consumer shopping destination.",
+  openGraph: {
+    title: "ShopSphere – Discover & Shop",
+    description: "Discover products, track orders, fast delivery. Your D2C shopping destination.",
+  },
+};
 
+const siteUrl =
+  process.env.NEXT_PUBLIC_SITE_URL ||
+  (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "http://localhost:3000");
+
+const organizationJsonLd = {
+  "@context": "https://schema.org",
+  "@type": "Organization",
+  name: "ShopSphere",
+  url: siteUrl,
+  description: "Modern D2C e-commerce platform. Shop smarter, track orders, fast delivery.",
+  potentialAction: {
+    "@type": "SearchAction",
+    target: { "@type": "EntryPoint", urlTemplate: `${siteUrl}/?search={search_term_string}` },
+    "query-input": "required name=search_term_string",
+  },
+};
 
 export default async function HomePage() {
-  return <HomeClient />;
+  return (
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationJsonLd) }}
+      />
+      <HomeClient />
+    </>
+  );
 }
