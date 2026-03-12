@@ -269,6 +269,10 @@ export const metadata: Metadata = {
     "Shop smarter with ShopSphere. Discover products, track orders, and enjoy fast delivery. Your direct-to-consumer shopping destination.",
   keywords: ["e-commerce", "D2C", "online shopping", "ShopSphere", "products", "delivery"],
   authors: [{ name: "ShopSphere" }],
+  icons: {
+    icon: "/shopsphere.png",
+    apple: "/shopsphere.png",
+  },
   openGraph: {
     type: "website",
     locale: "en_IN",
