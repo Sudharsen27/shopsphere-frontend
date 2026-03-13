@@ -191,14 +191,15 @@ export default function ProductPage() {
             src={getImageSrc(product.image)}
             alt={product.name}
             fill
+            sizes="(max-width: 768px) 100vw, 50vw"
             className="object-cover rounded"
+            unoptimized={getImageSrc(product.image).startsWith("http")}
             onError={(e) => {
               const target = e.target as HTMLImageElement;
               if (!target.src.includes("photo-1505740420928")) {
                 target.src = "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=500&auto=format&fit=crop&q=80";
               }
             }}
-            unoptimized={product.image?.includes("unsplash.com") || !product.image}
           />
         </div>
 

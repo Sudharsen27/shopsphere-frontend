@@ -662,6 +662,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { useCart } from "../context/CartContext";
 import { useAuth } from "../context/AuthContext";
 import { useState, useEffect } from "react";
@@ -723,6 +724,7 @@ export default function CheckoutPage() {
   const [applyingCoupon, setApplyingCoupon] = useState(false);
   const [appliedCoupon, setAppliedCoupon] = useState<{ code: string; discountAmount: number } | null>(null);
   const [couponError, setCouponError] = useState("");
+  const [guestEmail, setGuestEmail] = useState("");
 
   useEffect(() => {
     setMounted(true);
@@ -886,10 +888,21 @@ export default function CheckoutPage() {
   };
 
   const placeOrder = async () => {
-    if (!userInfo) {
-      alert("Please login to place an order");
-      router.replace("/login");
-      return;
+    const isGuest = !userInfo;
+    if (isGuest) {
+      const email = guestEmail.trim();
+      if (!email) {
+        alert("Please enter your email to continue as guest");
+        return;
+      }
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        alert("Please enter a valid email address");
+        return;
+      }
+      if (paymentMethod === "Online Payment") {
+        alert("Please login to use Online Payment, or choose Cash on Delivery for guest checkout.");
+        return;
+      }
     }
 
     if (cartItems.length === 0) {
@@ -904,14 +917,15 @@ export default function CheckoutPage() {
 
     setPlacing(true);
 
+    const headers: Record<string, string> = { "Content-Type": "application/json" };
+    if (userInfo?.token) headers.Authorization = `Bearer ${userInfo.token}`;
+
     try {
       const res = await fetch(`${API_BASE}/orders`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${userInfo.token}`,
-        },
+        headers,
         body: JSON.stringify({
+          ...(isGuest && { guestEmail: guestEmail.trim() }),
           orderItems: cartItems.map((item) => ({
             product: item._id,
             name: item.name,
@@ -960,7 +974,11 @@ export default function CheckoutPage() {
         // COD - order placed successfully
         clearCart();
         alert("Order placed successfully 🥳");
-        router.replace("/orders");
+        if (userInfo) {
+          router.replace("/orders");
+        } else {
+          router.replace(`/payment/success?orderId=${orderId}`);
+        }
       }
     } catch (error) {
       console.error("Order error:", error);
@@ -1003,6 +1021,26 @@ export default function CheckoutPage() {
   return (
     <div className="max-w-4xl mx-auto p-4 sm:p-6">
       <h1 className="text-2xl sm:text-3xl font-bold mb-6 sm:mb-8">Checkout</h1>
+
+      {/* 👤 GUEST CHECKOUT */}
+      {!userInfo && (
+        <div className="mb-8 p-4 border border-gray-600 rounded-lg bg-gray-900/50">
+          <h2 className="text-lg font-semibold mb-2">Continue as guest</h2>
+          <p className="text-sm text-gray-400 mb-3">
+            Enter your email. We&apos;ll send order confirmation and tracking to this address.
+          </p>
+          <input
+            type="email"
+            placeholder="your@email.com"
+            className="w-full p-3 border rounded bg-black text-white border-gray-700"
+            value={guestEmail}
+            onChange={(e) => setGuestEmail(e.target.value)}
+          />
+          <p className="text-sm text-gray-500 mt-2">
+            Or <Link href="/login" className="text-green-400 hover:underline">login</Link> to use saved addresses and Online Payment.
+          </p>
+        </div>
+      )}
 
       {/* 🏠 SHIPPING ADDRESS */}
       <div className="mb-8 space-y-4">
