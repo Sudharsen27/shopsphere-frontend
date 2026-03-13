@@ -1176,7 +1176,7 @@ export default function CheckoutPage() {
         </div>
       </div>
 
-      {/* 🛒 ORDER SUMMARY */}
+      {/* 🛒 ORDER SUMMARY – full cost before payment */}
       <div className="mb-6 border border-gray-700 rounded-lg p-4 sm:p-6 bg-gray-900/50">
         <h2 className="text-lg sm:text-xl font-semibold mb-4">Order Summary</h2>
         <div className="space-y-2 mb-4">
@@ -1191,6 +1191,20 @@ export default function CheckoutPage() {
               <span className="font-medium text-white">₹{(item.price * item.qty).toLocaleString()}</span>
             </div>
           ))}
+        </div>
+        <div className="space-y-2 py-3 border-b border-gray-700/50">
+          <div className="flex justify-between text-sm text-gray-300">
+            <span>Subtotal</span>
+            <span>₹{subtotal.toLocaleString()}</span>
+          </div>
+          <div className="flex justify-between text-sm text-gray-300">
+            <span>Tax</span>
+            <span>₹0</span>
+          </div>
+          <div className="flex justify-between text-sm text-gray-300">
+            <span>Shipping</span>
+            <span>₹0</span>
+          </div>
         </div>
         <div className="py-3 border-b border-gray-700/50">
           <p className="text-xs text-gray-400 mb-2">
@@ -1234,8 +1248,8 @@ export default function CheckoutPage() {
             <span>−₹{discountAmount.toLocaleString()}</span>
           </div>
         )}
-        <div className="flex justify-between font-bold text-lg sm:text-xl pt-4 border-t border-gray-700">
-          <span className="text-white">Total</span>
+        <div className="flex justify-between font-bold text-lg sm:text-xl pt-4 border-t-2 border-gray-600">
+          <span className="text-white">Total to pay</span>
           <span className="text-green-400">₹{total.toLocaleString()}</span>
         </div>
       </div>
@@ -1243,15 +1257,15 @@ export default function CheckoutPage() {
       <button
         onClick={placeOrder}
         disabled={placing || (paymentMethod === "Online Payment" && loadingRazorpay)}
-        className="w-full bg-green-600 hover:bg-green-700 disabled:opacity-70 disabled:cursor-not-allowed transition py-3 sm:py-4 rounded-lg font-medium text-white text-base sm:text-lg"
+        className="w-full bg-green-600 hover:bg-green-700 disabled:opacity-70 disabled:cursor-not-allowed transition py-3 sm:py-4 rounded-lg font-semibold text-white text-base sm:text-lg shadow-lg hover:shadow-green-500/20"
       >
         {placing
           ? "Placing order..."
           : paymentMethod === "Online Payment" && loadingRazorpay
           ? "Loading payment gateway..."
           : paymentMethod === "Online Payment"
-          ? "Proceed to Payment"
-          : "Place Order"}
+          ? `Pay ₹${total.toLocaleString()} now`
+          : `Place order — ₹${total.toLocaleString()}`}
       </button>
     </div>
   );

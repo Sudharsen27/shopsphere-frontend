@@ -18,6 +18,7 @@ type Product = {
   name: string;
   price: number;
   image?: string;
+  images?: string[];
   description?: string;
   category?: string;
   brand?: string;
@@ -99,6 +100,11 @@ export default function ProductPage() {
   const [error, setError] = useState<string | null>(null);
   const [refreshReviews, setRefreshReviews] = useState(0);
   const [relatedProducts, setRelatedProducts] = useState<Product[]>([]);
+  const [selectedImageIndex, setSelectedImageIndex] = useState(0);
+
+  useEffect(() => {
+    setSelectedImageIndex(0);
+  }, [productId]);
 
   useEffect(() => {
     const fetchProduct = async () => {
@@ -183,24 +189,58 @@ export default function ProductPage() {
     );
   }
 
+  const galleryImages = [
+    ...(product.image ? [product.image] : []),
+    ...(product.images && product.images.length ? product.images : []),
+  ].filter(Boolean);
+  const mainImageSrc = galleryImages[selectedImageIndex] ?? product.image;
+  const hasGallery = galleryImages.length > 1;
+
   return (
     <main className="p-4 sm:p-6 max-w-4xl mx-auto">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 mb-6 sm:mb-8">
-        <div className="relative h-64 sm:h-80 bg-gray-100 rounded">
-          <Image
-            src={getImageSrc(product.image)}
-            alt={product.name}
-            fill
-            sizes="(max-width: 768px) 100vw, 50vw"
-            className="object-cover rounded"
-            unoptimized={getImageSrc(product.image).startsWith("http")}
-            onError={(e) => {
-              const target = e.target as HTMLImageElement;
-              if (!target.src.includes("photo-1505740420928")) {
-                target.src = "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=500&auto=format&fit=crop&q=80";
-              }
-            }}
-          />
+        <div className="space-y-3">
+          <div className="relative h-64 sm:h-80 bg-[var(--card-border)]/20 rounded-lg overflow-hidden border border-[var(--card-border)]">
+            <Image
+              src={getImageSrc(mainImageSrc)}
+              alt={product.name}
+              fill
+              sizes="(max-width: 768px) 100vw, 50vw"
+              className="object-cover rounded-lg"
+              unoptimized={getImageSrc(mainImageSrc).startsWith("http")}
+              onError={(e) => {
+                const target = e.target as HTMLImageElement;
+                if (!target.src.includes("photo-1505740420928")) {
+                  target.src = "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=500&auto=format&fit=crop&q=80";
+                }
+              }}
+            />
+          </div>
+          {hasGallery && (
+            <div className="flex gap-2 overflow-x-auto pb-1">
+              {galleryImages.map((img, idx) => (
+                <button
+                  key={idx}
+                  type="button"
+                  onClick={() => setSelectedImageIndex(idx)}
+                  className={`relative flex-shrink-0 w-14 h-14 sm:w-16 sm:h-16 rounded-md overflow-hidden border-2 transition-colors ${
+                    selectedImageIndex === idx
+                      ? "border-green-500 ring-2 ring-green-500/30"
+                      : "border-gray-600 hover:border-gray-500"
+                  }`}
+                >
+                  <Image
+                    src={getImageSrc(img)}
+                    alt={`${product.name} view ${idx + 1}`}
+                    fill
+                    className="object-cover"
+                    unoptimized={getImageSrc(img).startsWith("http")}
+                    sizes="64px"
+                  />
+                </button>
+              ))}
+            </div>
+          )}
         </div>
 
         <div className="relative">
@@ -250,6 +290,17 @@ export default function ProductPage() {
 
           {/* Add to Cart Button */}
           <AddToCartButton product={product} />
+
+          {/* Delivery & Returns */}
+          <div className="mt-6 p-4 rounded-lg bg-[var(--card-bg)] border border-[var(--card-border)] space-y-3">
+            <h3 className="text-sm font-semibold text-[var(--foreground)]">Delivery & returns</h3>
+            <ul className="text-sm text-[var(--muted)] space-y-1">
+              <li>• Delivery in 3–5 business days</li>
+              <li>• Free delivery on orders above ₹499</li>
+              <li>• 7-day easy returns if unused and in original packaging</li>
+              <li>• Contact support for any issues</li>
+            </ul>
+          </div>
         </div>
       </div>
 
@@ -277,7 +328,7 @@ export default function ProductPage() {
                     fill
                     className="object-cover group-hover:scale-105 transition-transform duration-200"
                     sizes="(max-width: 640px) 50vw, 25vw"
-                    unoptimized={p.image?.includes("unsplash.com") || !p.image}
+                    unoptimized={getImageSrc(p.image).startsWith("http")}
                   />
                 </div>
                 <p className="text-sm font-medium line-clamp-2 group-hover:text-[var(--accent)] transition-colors">
