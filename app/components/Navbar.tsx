@@ -245,17 +245,21 @@
 
 "use client";
 
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import Link from "next/link";
 import { useCart } from "../context/CartContext";
 import { useAuth } from "../context/AuthContext";
 import { useTheme } from "../context/ThemeContext";
+import MiniCartDrawer from "./MiniCartDrawer";
 
 export default function Navbar() {
   const { cartItems } = useCart();
   const { userInfo, logout } = useAuth();
   const { resolved, setTheme } = useTheme();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [cartOpen, setCartOpen] = useState(false);
+
+  const closeCart = useCallback(() => setCartOpen(false), []);
 
   const totalQty = cartItems.reduce(
     (total, item) => total + item.qty,
@@ -263,9 +267,10 @@ export default function Navbar() {
   );
 
   return (
-    <nav className="sticky top-0 z-50 bg-[var(--card-bg)] border-b border-[var(--card-border)]">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16">
+    <>
+      <nav className="sticky top-0 z-50 bg-[var(--card-bg)] border-b border-[var(--card-border)]">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between h-16">
           {/* Logo */}
           <Link href="/" className="text-xl sm:text-2xl font-bold text-[var(--foreground)] hover:text-[var(--accent)] transition-colors duration-200">
             ShopSphere
@@ -298,14 +303,18 @@ export default function Navbar() {
               </Link>
             ) : (
               <>
-                <Link href="/cart" className="font-medium text-[var(--foreground)] hover:text-[var(--accent)] transition-colors duration-200 px-3 py-2 rounded-md relative active:scale-[0.98]">
+                <button
+                  type="button"
+                  onClick={() => setCartOpen(true)}
+                  className="font-medium text-[var(--foreground)] hover:text-[var(--accent)] transition-colors duration-200 px-3 py-2 rounded-md relative active:scale-[0.98]"
+                >
                   Cart
                   {totalQty > 0 && (
                     <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
                       {totalQty}
                     </span>
                   )}
-                </Link>
+                </button>
 
                 <Link href="/wishlist" className="font-medium text-[var(--foreground)] hover:text-[var(--accent)] transition-colors duration-200 px-3 py-2 rounded-md active:scale-[0.98]">
                   Wishlist
@@ -381,9 +390,12 @@ export default function Navbar() {
                 </Link>
               ) : (
                 <>
-                  <Link
-                    href="/cart"
-                    onClick={() => setMobileMenuOpen(false)}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setMobileMenuOpen(false);
+                      setCartOpen(true);
+                    }}
                     className="font-medium text-[var(--foreground)] hover:text-[var(--accent)] transition-colors px-4 py-2 rounded flex items-center justify-between"
                   >
                     <span>Cart</span>
@@ -392,7 +404,7 @@ export default function Navbar() {
                         {totalQty}
                       </span>
                     )}
-                  </Link>
+                  </button>
 
                   <Link href="/wishlist" onClick={() => setMobileMenuOpen(false)} className="font-medium text-[var(--foreground)] hover:text-[var(--accent)] transition-colors px-4 py-2 rounded">
                     Wishlist
@@ -426,7 +438,9 @@ export default function Navbar() {
             </div>
           </div>
         )}
-      </div>
-    </nav>
+        </div>
+      </nav>
+      <MiniCartDrawer open={cartOpen} onClose={closeCart} />
+    </>
   );
 }
