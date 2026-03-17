@@ -9,7 +9,7 @@ import WishlistButton from "@/app/components/WishlistButton";
 import ProductReviews from "@/app/components/ProductReviews";
 import ReviewForm from "@/app/components/ReviewForm";
 import { ProductDetailSkeleton } from "@/app/components/ProductCardSkeleton";
-import { useAuth } from "@/app/context/AuthContext";
+import { trackEvent } from "@/lib/analytics";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
 
@@ -94,7 +94,6 @@ function getImageSrc(image?: string) {
 export default function ProductPage() {
   const params = useParams();
   const productId = params.id as string;
-  const { userInfo } = useAuth();
   const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -105,6 +104,17 @@ export default function ProductPage() {
   useEffect(() => {
     setSelectedImageIndex(0);
   }, [productId]);
+
+  useEffect(() => {
+    if (!product?._id) return;
+    trackEvent("view_product", {
+      productId: product._id,
+      name: product.name,
+      price: product.price,
+      category: product.category || undefined,
+      brand: product.brand || undefined,
+    });
+  }, [product?._id]);
 
   useEffect(() => {
     const fetchProduct = async () => {

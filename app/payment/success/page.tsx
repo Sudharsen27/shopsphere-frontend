@@ -3,6 +3,7 @@
 import { useEffect, useState, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
+import { trackEvent } from "@/lib/analytics";
 
 function PaymentSuccessContent() {
   const searchParams = useSearchParams();
@@ -43,6 +44,12 @@ function PaymentSuccessContent() {
 
     return () => clearInterval(timer);
   }, [mounted, orderId, router]);
+
+  useEffect(() => {
+    if (!mounted) return;
+    if (!orderId) return;
+    trackEvent("purchase_success_page", { orderId });
+  }, [mounted, orderId]);
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4">

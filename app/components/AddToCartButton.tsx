@@ -37,6 +37,7 @@
 
 import { useCart } from "@/app/context/CartContext";
 import { useToast } from "@/app/context/ToastContext";
+import { trackEvent } from "@/lib/analytics";
 
 type Product = {
   _id: string;
@@ -60,6 +61,11 @@ export default function AddToCartButton({ product }: { product: Product }) {
           qty: 1,
         });
         toast.success("Added to cart");
+        trackEvent("add_to_cart", {
+          productId: product._id,
+          name: product.name,
+          price: product.price,
+        });
       }}
       className="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg font-medium transition-colors"
     >

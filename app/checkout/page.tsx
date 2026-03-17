@@ -667,6 +667,7 @@ import { useCart } from "../context/CartContext";
 import { useAuth } from "../context/AuthContext";
 import { useState, useEffect } from "react";
 import { authApi } from "@/lib/api";
+import { trackEvent } from "@/lib/analytics";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
 
@@ -675,7 +676,7 @@ const RAZORPAY_KEY_ID = process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || "";
 
 declare global {
   interface Window {
-    Razorpay: any;
+    Razorpay?: unknown;
   }
 }
 
@@ -733,8 +734,9 @@ export default function CheckoutPage() {
   // Load saved addresses when user is logged in
   useEffect(() => {
     if (!userInfo) return;
-    authApi.getProfile().then((res: any) => {
-      const list = res?.user?.addresses || [];
+    authApi.getProfile().then((res: unknown) => {
+      const typedRes = res as { user?: { addresses?: SavedAddress[] } } | null;
+      const list = typedRes?.user?.addresses || [];
       setSavedAddresses(Array.isArray(list) ? list : []);
       const defaultAddr = list?.find((a: SavedAddress) => a.isDefault) || list?.[0];
       if (defaultAddr && !useNewAddress) {
@@ -745,11 +747,29 @@ export default function CheckoutPage() {
         setCountry(defaultAddr.country);
       }
     }).catch(() => {});
-  }, [userInfo]);
+  }, [userInfo, useNewAddress]);
+
+  useEffect(() => {
+    if (!mounted) return;
+    if (cartItems.length === 0) return;
+    trackEvent("begin_checkout", {
+      items: cartItems.length,
+      subtotal,
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mounted]);
 
   const subtotal = cartItems.reduce((sum, item) => sum + item.price * item.qty, 0);
   const discountAmount = appliedCoupon?.discountAmount ?? 0;
   const total = Math.max(0, subtotal - discountAmount);
+
+  type RazorpayCreateOrderResponse = {
+    keyId?: string;
+    amount: number;
+    currency: string;
+    orderId: string;
+    message?: string;
+  };
 
   const applyCoupon = async () => {
     const code = couponInput.trim();
@@ -800,6 +820,12 @@ export default function CheckoutPage() {
     }
   }, [paymentMethod]);
 
+  type RazorpayResponse = {
+    razorpay_order_id: string;
+    razorpay_payment_id: string;
+    razorpay_signature: string;
+  };
+
   const handleOnlinePayment = async (orderId: string) => {
     if (!window.Razorpay) {
       alert("Payment gateway not loaded. Please refresh and try again.");
@@ -820,7 +846,7 @@ export default function CheckoutPage() {
         }),
       });
 
-      const data = await res.json();
+      const data = (await res.json()) as RazorpayCreateOrderResponse;
 
       if (!res.ok) {
         throw new Error(data.message || "Failed to create payment order");
@@ -834,7 +860,7 @@ export default function CheckoutPage() {
         name: "ShopSphere",
         description: `Order #${orderId.slice(-8)}`,
         order_id: data.orderId,
-        handler: async function (response: any) {
+        handler: async function (response: RazorpayResponse) {
           // Verify payment on backend
           try {
             const verifyRes = await fetch(`${API_BASE}/payments/verify`, {
@@ -854,6 +880,11 @@ export default function CheckoutPage() {
             const verifyData = await verifyRes.json();
 
             if (verifyRes.ok && verifyData.success) {
+              trackEvent("purchase", {
+                orderId,
+                total,
+                paymentMethod: "Online Payment",
+              });
               clearCart();
               router.push(`/payment/success?orderId=${orderId}`);
             } else {
@@ -879,7 +910,8 @@ export default function CheckoutPage() {
         },
       };
 
-      const razorpay = new window.Razorpay(options);
+      const RazorpayCtor = window.Razorpay as unknown as new (opts: typeof options) => { open: () => void };
+      const razorpay = new RazorpayCtor(options);
       razorpay.open();
     } catch (error) {
       console.error("Payment error:", error);
@@ -972,6 +1004,12 @@ export default function CheckoutPage() {
         await handleOnlinePayment(orderId);
       } else {
         // COD - order placed successfully
+        trackEvent("purchase", {
+          orderId,
+          total,
+          paymentMethod: "COD",
+          isGuest: !userInfo,
+        });
         clearCart();
         alert("Order placed successfully 🥳");
         if (userInfo) {
