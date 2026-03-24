@@ -103,6 +103,43 @@ export default function AdminOrdersPage() {
     }
   };
 
+  const handleSingleStatusUpdate = async (orderId: string, status: string) => {
+    if (!userInfo) return;
+
+    setUpdatingId(orderId);
+    try {
+      const res = await fetch(`${API_BASE}/orders/${orderId}/status`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${userInfo.token}`,
+        },
+        body: JSON.stringify({ status }),
+      });
+
+      const data = await res.json().catch(() => ({}));
+      if (res.ok) {
+        setOrders((prev) =>
+          prev.map((order) =>
+            order._id === orderId
+              ? {
+                  ...order,
+                  status,
+                  isDelivered: status === "delivered",
+                }
+              : order
+          )
+        );
+      } else {
+        alert(data.message || "Failed to update status");
+      }
+    } catch {
+      alert("Failed to update status");
+    } finally {
+      setUpdatingId(null);
+    }
+  };
+
   const toggleSelect = (id: string) => {
     setSelectedIds((prev) => {
       const next = new Set(prev);
@@ -307,7 +344,7 @@ export default function AdminOrdersPage() {
                         {new Date(order.createdAt).toLocaleString()}
                       </div>
                     </div>
-                    <div className="flex flex-wrap gap-2">
+                    <div className="flex flex-wrap gap-2 items-center">
                       {order.isPaid ? (
                         <span className="bg-green-600 px-2 sm:px-3 py-1 rounded text-xs sm:text-sm">
                           Paid
@@ -337,6 +374,20 @@ export default function AdminOrdersPage() {
                           {order.status}
                         </span>
                       )}
+                      <select
+                        value={order.status || "pending"}
+                        onChange={(e) =>
+                          handleSingleStatusUpdate(order._id, e.target.value)
+                        }
+                        disabled={updatingId === order._id}
+                        className="bg-gray-800 border border-gray-600 rounded px-2 py-1 text-xs sm:text-sm capitalize disabled:opacity-50"
+                      >
+                        {STATUS_OPTIONS.map((statusOption) => (
+                          <option key={statusOption} value={statusOption}>
+                            {statusOption}
+                          </option>
+                        ))}
+                      </select>
                     </div>
                   </div>
                   </div>

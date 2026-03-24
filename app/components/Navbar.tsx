@@ -245,19 +245,33 @@
 
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useCart } from "../context/CartContext";
 import { useAuth } from "../context/AuthContext";
 import { useTheme } from "../context/ThemeContext";
 import MiniCartDrawer from "./MiniCartDrawer";
+import NotificationDropdown from "./NotificationDropdown";
+
+type NotificationItem = {
+  _id: string;
+  title: string;
+  message: string;
+  isRead: boolean;
+  orderId?: string | null;
+};
 
 export default function Navbar() {
+  const router = useRouter();
   const { cartItems } = useCart();
   const { userInfo, logout } = useAuth();
   const { resolved, setTheme } = useTheme();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [cartOpen, setCartOpen] = useState(false);
+  const [notificationOpen, setNotificationOpen] = useState(false);
+  const [notifications, setNotifications] = useState<NotificationItem[]>([]);
+  const [unreadCount, setUnreadCount] = useState(0);
 
   const closeCart = useCallback(() => setCartOpen(false), []);
 
@@ -265,6 +279,71 @@ export default function Navbar() {
     (total, item) => total + item.qty,
     0
   );
+
+  useEffect(() => {
+    const fetchNotifications = async () => {
+      if (!userInfo?.token) {
+        setUnreadCount(0);
+        return;
+      }
+
+      try {
+        const apiBase =
+          process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
+        const response = await fetch(`${apiBase}/notifications`, {
+          headers: {
+            Authorization: `Bearer ${userInfo.token}`,
+          },
+          cache: "no-store",
+        });
+
+        if (!response.ok) {
+          setUnreadCount(0);
+          return;
+        }
+
+        const notifications: NotificationItem[] = await response.json();
+        setNotifications(notifications);
+        const unread = notifications.filter((item) => !item.isRead).length;
+        setUnreadCount(unread);
+      } catch {
+        setNotifications([]);
+        setUnreadCount(0);
+      }
+    };
+
+    fetchNotifications();
+  }, [userInfo]);
+
+  const handleNotificationClick = async (notification: NotificationItem) => {
+    if (!userInfo?.token) return;
+
+    try {
+      const apiBase = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
+      await fetch(`${apiBase}/notifications/${notification._id}/read`, {
+        method: "PATCH",
+        headers: {
+          Authorization: `Bearer ${userInfo.token}`,
+        },
+      });
+    } catch {
+      // Keep navigation working even if mark-read request fails.
+    }
+
+    setNotifications((prev) =>
+      prev.map((item) =>
+        item._id === notification._id ? { ...item, isRead: true } : item
+      )
+    );
+    setUnreadCount((prev) => (notification.isRead ? prev : Math.max(0, prev - 1)));
+    setNotificationOpen(false);
+
+    if (notification.orderId) {
+      router.push(`/orders/${notification.orderId}`);
+    } else {
+      router.push("/orders");
+    }
+  };
 
   return (
     <>
@@ -303,6 +382,39 @@ export default function Navbar() {
               </Link>
             ) : (
               <>
+                <div className="relative">
+                  <button
+                    type="button"
+                    onClick={() => setNotificationOpen((prev) => !prev)}
+                    className="relative p-2 text-[var(--foreground)] hover:text-[var(--accent)] transition-colors duration-200 rounded-md active:scale-[0.98]"
+                    aria-label="Notifications"
+                  >
+                    <svg
+                      className="w-6 h-6"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V4a2 2 0 10-4 0v1.341C7.67 6.165 6 8.389 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"
+                      />
+                    </svg>
+                    {unreadCount > 0 && (
+                      <span className="absolute -top-1 -right-1 min-w-5 h-5 px-1 bg-red-500 text-white text-[10px] rounded-full flex items-center justify-center">
+                        {unreadCount}
+                      </span>
+                    )}
+                  </button>
+                  <NotificationDropdown
+                    isOpen={notificationOpen}
+                    notifications={notifications}
+                    onNotificationClick={handleNotificationClick}
+                  />
+                </div>
+
                 <button
                   type="button"
                   onClick={() => setCartOpen(true)}
